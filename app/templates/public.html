@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Ocupação das Salas{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="page-title">Ocupação das Salas</h1>
+  <p class="page-sub">Visibilidade pública em tempo real · {{ today }}</p>
+
+  {% if rooms %}
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      {% for room in rooms %}
+        {% set room_res = reservations | selectattr("room_id", "equalto", room.id) | list %}
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 12px; height: 44px; border-radius: 4px; background: {{ room.color }};"></div>
+              <div>
+                <div style="font-size: 18px; font-weight: 700;">{{ room.name }}</div>
+                <div style="color: #666; font-size: 13px;">👥 {{ room.capacity }} pessoas · 📍 {{ room.location }}</div>
+                <div class="room-schedule">
+                  <span class="time-icon">🕐</span>
+                  <span>{{ room.start_time }} – {{ room.end_time }}</span>
+                </div>
+              </div>
+            </div>
+            {% if room_res | length == 0 %}
+              <span class="tag tag-blue">🟦 Livre agora</span>
+            {% else %}
+              <span class="tag tag-orange">🟠 Ocupada hoje</span>
+            {% endif %}
+          </div>
+
+          <!-- Barra de ocupação -->
+          <div class="occ-bar">
+            {% set start_min = room.start_time.split(':')[0] | int * 60 + room.start_time.split(':')[1] | int %}
+            {% set end_min = room.end_time.split(':')[0] | int * 60 + room.end_time.split(':')[1] | int %}
+            {% set total = end_min - start_min %}
+            {% for r in room_res %}
+              {% set s = r.start_time.split(':')[0] | int * 60 + r.start_time.split(':')[1] | int %}
+              {% set e = r.end_time.split(':')[0] | int * 60 + r.end_time.split(':')[1] | int %}
+              {% set left = ((s - start_min) / total * 100) %}
+              {% set width = ((e - s) / total * 100) %}
+              <div class="occ-segment" 
+                   style="left: {{ left }}%; width: {{ width }}%; background: {{ room.color }};"
+                   data-title="{{ r.title }}: {{ r.start_time }}–{{ r.end_time }}"></div>
+            {% endfor %}
+          </div>
+
+          <!-- Lista de reservas -->
+          <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
+            {% if room_res %}
+              {% for r in room_res | sort(attribute='start_time') %}
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #0d0d1a; border-radius: 8px; border-left: 3px solid {{ room.color }};">
+                  <span style="font-weight: 600; font-size: 14px;">{{ r.title }}</span>
+                  <span style="font-family: monospace; font-size: 13px; color: #888;">{{ r.start_time }} – {{ r.end_time }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div style="color: #555; font-size: 13px;">Sem reservas para hoje.</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 48px; color: #555;">
+      <div style="font-size: 40px; margin-bottom: 12px;">🏢</div>
+      <p>Ainda não existem salas registadas.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

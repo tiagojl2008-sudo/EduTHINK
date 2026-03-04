@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Gestão_Salas{% endblock %}</title>
+  <style>
+    :root {
+      --primary: #0066cc;
+      --primary-hover: #0052a3;
+      --primary-light: rgba(0, 102, 204, 0.15);
+      --bg: #0a0a0f;
+      --bg-gradient: linear-gradient(135deg, #0a0a0f 0%, #12121a 100%);
+      --card: #14141f;
+      --card-hover: #1a1a28;
+      --danger: #cc3355;
+      --danger-hover: #ff5c8a;
+      --border: #2a2a3e;
+      --border-light: #3a3a4e;
+      --text: #f0f0f5;
+      --text-muted: #8888aa;
+      --success: #33aa66;
+      --success-bg: #0a2a10;
+      --warning: #ffaa00;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /*Cabeçalho e Navegação e Logo*/
+    .header {
+      background: rgba(20, 20, 31, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s;
+    }
+
+    .logo:hover {
+      transform: scale(1.02);
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 2px 10px rgba(0, 102, 204, 0.3);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .nav a, .nav button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav a:hover, .nav button:hover {
+      background: var(--primary-light);
+      border-color: var(--border-light);
+      transform: translateY(-1px);
+    }
+
+    .nav .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    }
+
+    .nav .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-hover) 0%, #004080 100%);
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+      transform: translateY(-2px);
+    }
+
+   /*Containers e Titulos*/
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Titles */
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, #c0c0d0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-sub {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+   /*Cartões e Formulários*/
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card:hover {
+      background: var(--card-hover);
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    /* Botões */
+    .btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-hover) 0%, #004080 100%);
+      box-shadow: 0 4px 16px rgba(0, 102, 204, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+      border: 1px solid var(--border-light);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--danger) 0%, #aa2244 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(204, 51, 85, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: linear-gradient(135deg, var(--danger-hover) 0%, #cc2244 100%);
+      box-shadow: 0 4px 16px rgba(204, 51, 85, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+   
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-tab {
+      padding: 12px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .admin-tab:hover {
+      color: var(--text);
+      background: var(--primary-light);
+      border-color: var(--border);
+    }
+
+    .admin-tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    /*Tabelas*/
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: rgba(13, 13, 26, 0.8);
+      border-bottom: 2px solid var(--border);
+    }
+
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr {
+      transition: all 0.2s;
+    }
+
+    tr:hover {
+      background: rgba(13, 13, 26, 0.5);
+    }
+
+ /*Formulários*/
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .lbl {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="color"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(13, 13, 26, 0.6);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(13, 13, 26, 0.8);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Tags */
+    .tag {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-green { 
+      background: var(--success-bg); 
+      color: var(--success);
+      border: 1px solid rgba(51, 170, 102, 0.3);
+    }
+    
+    .tag-orange { 
+      background: rgba(255, 170, 0, 0.15); 
+      color: var(--warning);
+      border: 1px solid rgba(255, 170, 0, 0.3);
+    }
+    
+    .tag-gray { 
+      background: rgba(50, 50, 60, 0.5); 
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    
+    .tag-blue { 
+      background: rgba(0, 102, 204, 0.15); 
+      color: var(--primary);
+      border: 1px solid rgba(0, 102, 204, 0.3);
+    }
+
+    /* Stat Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-card);
+    }
+
+    .stat-card:hover {
+      background: var(--card-hover);
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0, 102, 204, 0.2);
+    }
+
+    .stat-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 2px 8px rgba(0, 102, 204, 0.3));
+    }
+
+    .stat-value {
+      font-size: 42px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary) 0%, #66b3ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* Reservation Items */
+    .reservation-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 24px !important;
+    }
+
+    .reservation-color {
+      width: 5px;
+      height: 50px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .reservation-info {
+      flex: 1;
+    }
+
+    .reservation-title {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .reservation-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .reservation-time {
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 14px;
+      color: var(--primary);
+      font-weight: 600;
+      background: var(--primary-light);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    .card-empty {
+      text-align: center;
+      padding: 48px !important;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+   /*Mensagens de Erro*/
+    .error-msg {
+      background: rgba(204, 51, 85, 0.15);
+      border: 1px solid var(--danger);
+      color: #ff8a9e;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .error-msg::before {
+      content: '⚠️';
+      font-size: 18px;
+    }
+
+    /* Barra de Ocupação */
+    .occ-bar {
+      position: relative;
+      height: 50px;
+      background: #0d0d1a;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+    }
+
+    .occ-segment {
+      position: absolute;
+      height: 100%;
+      opacity: 0.85;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .occ-segment:hover {
+      opacity: 1;
+      z-index: 10;
+    }
+
+    /* Tooltip para horários */
+    .time-tooltip {
+      position: absolute;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    /* Horário da Sala (grande e visível) */
+    .room-schedule {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #0d0d1a;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 8px;
+    }
+
+    .room-schedule .time-icon {
+      font-size: 16px;
+    }
+
+    /* Grelha de Horários */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .day-column {
+      background: #111118;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .day-column h4 {
+      text-align: center;
+      margin-bottom: 12px;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .time-slot {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 4px 0;
+      font-size: 13px;
+      text-align: center;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .time-slot.free {
+      background: #0a2a10;
+      color: var(--success);
+      border-color: var(--success);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .time-slot.free:hover {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .time-slot.occupied {
+      background: #2a0a0a;
+      color: var(--danger);
+      border-color: var(--danger);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border);
+      font-size: 20px;
+      font-weight: 700;
+      background: rgba(13, 13, 26, 0.5);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .modal form {
+      padding: 28px;
+    }
+
+   
+    .occ-bar {
+      position: relative;
+      height: 50px;
+      background: rgba(13, 13, 26, 0.8);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+    }
+
+    .occ-segment {
+      position: absolute;
+      height: 100%;
+      opacity: 0.9;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .occ-segment:hover {
+      opacity: 1;
+      z-index: 10;
+      transform: scaleY(1.05);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+   /*Layouts de Grid*/
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      margin-top: 64px;
+      background: rgba(20, 20, 31, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">
+      <div class="logo-icon">🏢</div>
+      <div style="display: flex; flex-direction: column; line-height: 1.2;">
+        <span style="font-weight: 700;">Gestão_Salas</span>
+        <span style="font-size: 11px; color: var(--text-muted);">Tiago Ferreira · Geocad · ISEP</span>
+      </div>
+    </a>
+    <nav class="nav">
+      <a href="/">Início</a>
+      {% if user %}
+        {% if user.role == 'admin' %}
+          <a href="/admin">Administração</a>
+          <a href="/dashboard">Dashboard</a>
+        {% else %}
+          <a href="/dashboard">Dashboard</a>
+          <a href="/user">A Minha Conta</a>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: 8px; padding: 4px 10px; background: var(--border); border-radius: 20px;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar }}" alt="{{ user.name }}" 
+                 style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+          {% else %}
+            <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+                        display: flex; align-items: center; justify-content: center; 
+                        font-size: 13px; font-weight: 700; color: white;">
+              {{ user.name[0].upper() }}
+            </div>
+          {% endif %}
+          <span style="font-size: 13px; font-weight: 600;">{{ user.name }}</span>
+        </div>
+        <a href="/logout">Sair</a>
+      {% else %}
+        <a href="/login">Entrar</a>
+        <a href="/register" class="btn btn-primary">Criar Conta</a>
+      {% endif %}
+    </nav>
+  </header>
+  
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div style="margin-bottom: 8px;">
+      <strong>Gestão de Salas</strong> — Projeto Geocad · ISEP
+    </div>
+    <div style="color: var(--text-muted); font-size: 12px;">
+      Desenvolvido por Tiago Ferreira &copy; 2026
+    </div>
+  </footer>
+
+  <!-- JavaScript para modais -->
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Clique fora do modal para fechar
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-backdrop')) {
+          backdrop.classList.remove('active');
+        }
+      });
+    });
+
+    // Tooltip para horários (ao passar o rato)
+    document.querySelectorAll('.occ-segment').forEach(segment => {
+      segment.addEventListener('mouseenter', (e) => {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'time-tooltip';
+        tooltip.textContent = e.target.getAttribute('data-title');
+        document.body.appendChild(tooltip);
+        
+        const rect = e.target.getBoundingClientRect();
+        tooltip.style.left = rect.left + 'px';
+        tooltip.style.top = (rect.top - 40) + 'px';
+      });
+      
+      segment.addEventListener('mouseleave', () => {
+        const tooltip = document.querySelector('.time-tooltip');
+        if (tooltip) tooltip.remove();
+      });
+    });
+  </script>
+</body>
+</html>

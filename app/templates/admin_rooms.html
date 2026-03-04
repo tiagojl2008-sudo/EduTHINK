@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Salas{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 12px;">
+    <div>
+      <h1 class="page-title">Gestão de Salas</h1>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-create-room')">+ Nova Sala</button>
+  </div>
+
+  <div class="admin-tabs">
+    <a class="admin-tab" href="/admin">Visão Geral</a>
+    <a class="admin-tab" href="/admin/reservations">Reservas</a>
+    <a class="admin-tab active" href="/admin/rooms">Salas</a>
+  </div>
+
+  {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    {% for room in rooms %}
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: {{ room.color }}; border: 2px solid #333;"></div>
+            <span style="font-weight: 700; font-size: 17px;">{{ room.name }}</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-secondary btn-sm" onclick="openModal('modal-edit-{{ room.id }}')">Editar</button>
+            <form method="post" action="/admin/rooms/delete/{{ room.id }}" style="display:inline;" onsubmit="return confirm('Eliminar sala?')">
+              <button class="btn btn-danger btn-sm" type="submit">✕</button>
+            </form>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #888;">
+          <div>📍 {{ room.location }}</div>
+          <div>👥 Capacidade: {{ room.capacity }}</div>
+          <div>🕐 {{ room.start_time }} – {{ room.end_time }}</div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+            {% set day_names = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'] %}
+            {% set work_list = room.work_days.split(',') %}
+            {% for i in range(7) %}
+              {% set bg_color = '#0a2a10' if (i|string) in work_list else '#1a1a1a' %}
+              {% set text_color = '#52b788' if (i|string) in work_list else '#444' %}
+              <span style="padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: {{ bg_color }}; color: {{ text_color }};">
+                {{ day_names[i] }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL EDITAR SALA -->
+      <div class="modal-backdrop" id="modal-edit-{{ room.id }}">
+        <div class="modal">
+          <div class="modal-title">
+            Editar Sala
+            <button class="modal-close" onclick="closeModal('modal-edit-{{ room.id }}')">✕</button>
+          </div>
+          <form method="post" action="/admin/rooms/update/{{ room.id }}">
+            {% set day_names2 = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'] %}
+            {% set work_list2 = room.work_days.split(',') %}
+            <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" value="{{ room.name }}" required></div>
+            <div class="grid2">
+              <div class="form-group"><label class="lbl">Capacidade</label><input type="number" name="capacity" value="{{ room.capacity }}" min="1" required></div>
+              <div class="form-group"><label class="lbl">Cor</label><input type="color" name="color" value="{{ room.color }}"></div>
+            </div>
+            <div class="form-group"><label class="lbl">Localização</label><input type="text" name="location" value="{{ room.location }}"></div>
+            <div class="grid2">
+              <div class="form-group"><label class="lbl">Início Horário</label><input type="time" name="start_time" value="{{ room.start_time }}"></div>
+              <div class="form-group"><label class="lbl">Fim Horário</label><input type="time" name="end_time" value="{{ room.end_time }}"></div>
+            </div>
+            <div class="form-group">
+              <label class="lbl">Dias Úteis</label>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                {% for i in range(7) %}
+                  {% set is_checked = (i|string) in work_list2 %}
+                  <label class="day-checkbox {% if is_checked %}checked{% endif %}" style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;">
+                    <input type="checkbox" name="work_days" value="{{ i }}" {% if is_checked %}checked{% endif %} style="display:none;">
+                    {{ day_names2[i] }}
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+              <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-{{ room.id }}')">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- MODAL CRIAR SALA -->
+<div class="modal-backdrop" id="modal-create-room">
+  <div class="modal">
+    <div class="modal-title">
+      Nova Sala
+      <button class="modal-close" onclick="closeModal('modal-create-room')">✕</button>
+    </div>
+    <form method="post" action="/admin/rooms/create">
+      <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" placeholder="Ex: Sala Alpha" required></div>
+      <div class="grid2">
+        <div class="form-group"><label class="lbl">Capacidade</label><input type="number" name="capacity" value="10" min="1" required></div>
+        <div class="form-group"><label class="lbl">Cor</label><input type="color" name="color" value="#0066cc"></div>
+      </div>
+      <div class="form-group"><label class="lbl">Localização</label><input type="text" name="location" placeholder="Ex: Piso 1"></div>
+      <div class="grid2">
+        <div class="form-group"><label class="lbl">Início Horário</label><input type="time" name="start_time" value="08:00"></div>
+        <div class="form-group"><label class="lbl">Fim Horário</label><input type="time" name="end_time" value="18:00"></div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Dias Úteis</label>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          {% for day, label in [(0,'Dom'),(1,'Seg'),(2,'Ter'),(3,'Qua'),(4,'Qui'),(5,'Sex'),(6,'Sáb')] %}
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 8px; border: 1px solid #2a2a3e; background: #111120; font-size: 12px; font-weight: 700; color: #666;">
+              <input type="checkbox" name="work_days" value="{{ day }}" {{ 'checked' if day in [1,2,3,4,5] }} style="margin-right: 4px;">
+              {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-room')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar Sala</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Tornar checkboxes de dias visuais
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const lbl = this.closest('label');
+      if (!lbl) return;
+      if (this.checked) {
+        lbl.style.borderColor = '#52b788'; lbl.style.background = '#0a2a10'; lbl.style.color = '#52b788';
+      } else {
+        lbl.style.borderColor = '#2a2a3e'; lbl.style.background = '#111120'; lbl.style.color = '#666';
+      }
+    });
+  });
+</script>
+{% endblock %}

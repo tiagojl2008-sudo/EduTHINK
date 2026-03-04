@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Equipamentos{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+    <div>
+      <h1 class="page-title">Gestão de Equipamentos</h1>
+      <p class="page-sub">Gerir equipamentos das salas.</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-create')">+ Novo Equipamento</button>
+  </div>
+
+  <div class="admin-tabs">
+    <a class="admin-tab" href="/admin">Visão Geral</a>
+    <a class="admin-tab" href="/admin/rooms">Salas</a>
+    <a class="admin-tab" href="/admin/users">Utilizadores</a>
+    <a class="admin-tab" href="/admin/reservations">Reservas</a>
+    <a class="admin-tab active" href="/admin/equipment">Equipamentos</a>
+  </div>
+
+  {% if equipment_list %}
+    <div class="card" style="padding: 0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Quantidade</th>
+            <th>Sala</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for eq in equipment_list %}
+            <tr>
+              <td style="font-weight: 600;">{{ eq.name }}</td>
+              <td style="color: #666;">{{ eq.description }}</td>
+              <td>{{ eq.quantity }}</td>
+              <td>{{ eq.room.name if eq.room else '—' }}</td>
+              <td>
+                <form method="post" action="/admin/equipment/delete/{{ eq.id }}" style="display:inline;" onsubmit="return confirm('Eliminar equipamento?')">
+                  <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 48px; color: #555;">
+      <p>Sem equipamentos registados.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal Criar Equipamento -->
+<div class="modal-backdrop" id="modal-create">
+  <div class="modal">
+    <div class="modal-title">
+      Novo Equipamento
+      <button class="modal-close" onclick="closeModal('modal-create')">✕</button>
+    </div>
+    <form method="post" action="/admin/equipment/create">
+      <div class="form-group">
+        <label class="lbl">Nome</label>
+        <input type="text" name="name" placeholder="Ex: Projetor" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Descrição</label>
+        <textarea name="description" placeholder="Ex: Projetor HD HDMI"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Quantidade</label>
+        <input type="number" name="quantity" value="1" min="1" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Sala</label>
+        <select name="room_id" required>
+          {% for room in rooms %}
+            <option value="{{ room.id }}">{{ room.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

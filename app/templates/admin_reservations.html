@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Reservas{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="page-title">Lista completa de reservas</h1>
+
+  <div class="admin-tabs">
+    <a class="admin-tab" href="/admin">Visão Geral</a>
+    <a class="admin-tab active" href="/admin/reservations">Reservas</a>
+    <a class="admin-tab" href="/admin/rooms">Salas</a>
+  </div>
+
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Sala</th>
+          <th>Data</th>
+          <th>Horário</th>
+          <th>Ações</th>
+         </tr>
+      </thead>
+      <tbody>
+        {% if reservations %}
+          {% for r in reservations %}
+            {% set room = rooms.get(r.room_id) %}
+            <tr>
+              <td style="font-weight: 600;">{{ r.title }}</td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="width: 8px; height: 8px; border-radius: 50%; background: {{ room.color if room else '#888' }};"></div>
+                  {{ room.name if room else '—' }}
+                </div>
+              </td>
+              <td style="font-family: monospace; color: #888;">{{ r.date }}</td>
+              <td style="font-family: monospace;">{{ r.start_time }} – {{ r.end_time }}</td>
+              <td>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn btn-secondary btn-sm" onclick="openModal('modal-edit-{{ r.id }}')">Editar</button>
+                  <form method="post" action="/reservations/delete/{{ r.id }}" style="display:inline;" onsubmit="return confirm('Eliminar reserva?')">
+                    <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+
+            <!-- MODAL EDITAR RESERVA -->
+            <div class="modal-backdrop" id="modal-edit-{{ r.id }}">
+              <div class="modal">
+                <div class="modal-title">
+                  Editar Reserva
+                  <button class="modal-close" onclick="closeModal('modal-edit-{{ r.id }}')">✕</button>
+                </div>
+                <form method="post" action="/admin/reservations/update/{{ r.id }}">
+                  <div class="form-group">
+                    <label class="lbl">Título</label>
+                    <input type="text" name="title" value="{{ r.title }}" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="lbl">Sala</label>
+                    <select name="room_id" required>
+                      {% for room in rooms.values() %}
+                        <option value="{{ room.id }}" {{ 'selected' if room.id == r.room_id }}>{{ room.name }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="lbl">Data</label>
+                    <input type="date" name="date" value="{{ r.date }}" required>
+                  </div>
+                  <div class="grid2">
+                    <div class="form-group">
+                      <label class="lbl">Início</label>
+                      <input type="time" name="start_time" value="{{ r.start_time }}" required>
+                    </div>
+                    <div class="form-group">
+                      <label class="lbl">Fim</label>
+                      <input type="time" name="end_time" value="{{ r.end_time }}" required>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-{{ r.id }}')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: #555; padding: 40px;">Sem reservas registadas.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

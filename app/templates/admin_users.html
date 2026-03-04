@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Utilizadores{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 12px;">
+    <h1 class="page-title">Gestão de Utilizadores</h1>
+    <button class="btn btn-primary" onclick="openModal('modal-create-user')">+ Novo Utilizador</button>
+  </div>
+
+  <div class="admin-tabs">
+    <a class="admin-tab" href="/admin">Visão Geral</a>
+    <a class="admin-tab" href="/admin/reservations">Reservas</a>
+    <a class="admin-tab" href="/admin/rooms">Salas</a>
+    <a class="admin-tab active" href="/admin/users">Utilizadores</a>
+  </div>
+
+  {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+  <div class="card" style="padding: 0; overflow: hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>Utilizador</th>
+          <th>Email</th>
+          <th>Função</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: {{ '#0066cc' if u.role == 'admin' else '#1e1e2e' }}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">{{ u.name[0] }}</div>
+                <span style="font-weight: 600;">{{ u.name }}</span>
+              </div>
+            </td>
+            <td style="color: #888;">{{ u.email }}</td>
+            <td>
+              <span class="tag {{ 'tag-orange' if u.role == 'admin' else 'tag-gray' }}">{{ u.role }}</span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-secondary btn-sm" onclick="openModal('modal-edit-user-{{ u.id }}')">Editar</button>
+                {% if u.role != 'admin' %}
+                  <form method="post" action="/admin/users/delete/{{ u.id }}" style="display:inline;" onsubmit="return confirm('Eliminar utilizador?')">
+                    <button class="btn btn-danger btn-sm" type="submit">✕</button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+
+          <!-- MODAL EDITAR USER -->
+          <div class="modal-backdrop" id="modal-edit-user-{{ u.id }}">
+            <div class="modal">
+              <div class="modal-title">
+                Editar Utilizador
+                <button class="modal-close" onclick="closeModal('modal-edit-user-{{ u.id }}')">✕</button>
+              </div>
+              <form method="post" action="/admin/users/update/{{ u.id }}">
+                <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" value="{{ u.name }}" required></div>
+                <div class="form-group"><label class="lbl">Email</label><input type="email" name="email" value="{{ u.email }}" required></div>
+                <div class="form-group"><label class="lbl">Nova Palavra-passe (deixar vazio para manter)</label><input type="password" name="password" placeholder="••••••••"></div>
+                <div class="form-group">
+                  <label class="lbl">Função</label>
+                  <select name="role">
+                    <option value="user" {{ 'selected' if u.role == 'user' }}>Utilizador</option>
+                    <option value="admin" {{ 'selected' if u.role == 'admin' }}>Administrador</option>
+                  </select>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+                  <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-user-{{ u.id }}')">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL CRIAR USER -->
+<div class="modal-backdrop" id="modal-create-user">
+  <div class="modal">
+    <div class="modal-title">
+      Novo Utilizador
+      <button class="modal-close" onclick="closeModal('modal-create-user')">✕</button>
+    </div>
+    <form method="post" action="/admin/users/create">
+      <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" placeholder="Nome completo" required></div>
+      <div class="form-group"><label class="lbl">Email</label><input type="email" name="email" placeholder="email@exemplo.pt" required></div>
+      <div class="form-group"><label class="lbl">Palavra-passe</label><input type="password" name="password" placeholder="••••••••" required></div>
+      <div class="form-group">
+        <label class="lbl">Função</label>
+        <select name="role">
+          <option value="user">Utilizador</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-user')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

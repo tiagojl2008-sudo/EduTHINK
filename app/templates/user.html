@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}A Minha Conta{% endblock %}
+{% block content %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 class="page-title">Olá, {{ user.name }} 👋</h1>
+      <p class="page-sub">Gerencie as suas reservas e perfil.</p>
+    </div>
+    <button class="btn btn-secondary" onclick="openModal('modal-profile')">✏️ Editar Perfil</button>
+  </div>
+
+  {% if error %}
+    <div class="error-msg">⚠️ {{ error }}</div>
+  {% endif %}
+  
+  {% if success %}
+    <div class="success-msg" style="background: rgba(51, 170, 102, 0.15); border: 1px solid var(--success); color: #52b788; padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 18px;">✅</span> {{ success }}
+    </div>
+  {% endif %}
+
+  <!-- Cartão de Info do Utilizador -->
+  <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; gap: 20px;">
+    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0;">
+      {{ user.name[0].upper() }}
+    </div>
+    <div style="flex: 1;">
+      <div style="font-weight: 700; font-size: 18px;">{{ user.name }}</div>
+      <div style="color: var(--text-muted); font-size: 14px;">{{ user.email }}</div>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 12px; color: var(--text-muted);">Tipo de Conta</div>
+      <span class="tag tag-{{ 'orange' if user.role == 'admin' else 'blue' }}">{{ user.role }}</span>
+    </div>
+  </div>
+
+  <!-- Secção de Reservas -->
+  <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 16px;">As Minhas Reservas</h3>
+  
+  {% if my_reservations %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for r in my_reservations %}
+        <div class="card reservation-item" style="padding: 18px 24px !important;">
+          <div class="reservation-info" style="flex: 1;">
+            <div class="reservation-title">{{ r.title }}</div>
+            <div class="reservation-meta">{{ r.date }} · {{ r.start_time }} – {{ r.end_time }}</div>
+          </div>
+          <form method="post" action="/reservations/delete/{{ r.id }}" onsubmit="return confirm('Eliminar reserva?')">
+            <button class="btn btn-danger btn-sm" type="submit">Eliminar</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card card-empty" style="text-align: center; padding: 48px !important; color: var(--text-muted);">
+      <div style="font-size: 48px; margin-bottom: 12px;">📅</div>
+      <p>Ainda não tens reservas.</p>
+      <button class="btn btn-primary" onclick="openModal('modal-reserva')" style="margin-top: 16px;">+ Nova Reserva</button>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal Editar Perfil -->
+<div class="modal-backdrop" id="modal-profile">
+  <div class="modal">
+    <div class="modal-title">
+      Editar Perfil
+      <button class="modal-close" onclick="closeModal('modal-profile')">✕</button>
+    </div>
+    <form method="post" action="/user/update" enctype="multipart/form-data">
+      <div style="text-align: center; margin-bottom: 20px;">
+        {% if user.avatar %}
+          <img src="{{ user.avatar }}" alt="Avatar" 
+               style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        {% else %}
+          <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+                      display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; color: white; margin: 0 auto;
+                      box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            {{ user.name[0].upper() }}
+          </div>
+        {% endif %}
+      </div>
+      
+      <div class="form-group">
+        <label class="lbl">Foto de Perfil</label>
+        <input type="file" name="avatar" accept="image/*" style="width: 100%;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+          📷 Formatos: JPG, PNG, GIF. Máx: 2MB.
+        </p>
+      </div>
+      
+      <div class="form-group">
+        <label class="lbl">Nome / Nickname</label>
+        <input type="text" name="name" value="{{ user.name }}" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Email</label>
+        <input type="email" name="email" value="{{ user.email }}" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Nova Palavra-passe (deixar vazio para manter)</label>
+        <input type="password" name="password" placeholder="••••••••" minlength="6">
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-profile')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nova Reserva -->
+<div class="modal-backdrop" id="modal-reserva">
+  <div class="modal">
+    <div class="modal-title">
+      Nova Reserva
+      <button class="modal-close" onclick="closeModal('modal-reserva')">✕</button>
+    </div>
+    <form method="post" action="/reservations/create">
+      <div class="form-group">
+        <label class="lbl">Título</label>
+        <input type="text" name="title" placeholder="Ex: Reunião" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Sala</label>
+        <select name="room_id" required>
+          {% for room in rooms %}
+            <option value="{{ room.id }}">{{ room.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Data</label>
+        <input type="date" name="date" required>
+      </div>
+      <div class="grid2">
+        <div class="form-group">
+          <label class="lbl">Início</label>
+          <input type="time" name="start_time" required>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Fim</label>
+          <input type="time" name="end_time" required>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-reserva')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Reservar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  .tag-blue { 
+    background: rgba(0, 102, 204, 0.15); 
+    color: var(--primary);
+    border: 1px solid rgba(0, 102, 204, 0.3);
+  }
+</style>
+{% endblock %}
