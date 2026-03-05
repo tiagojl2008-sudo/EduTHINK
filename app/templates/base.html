@@ -124,6 +124,38 @@
       padding: 40px 24px;
     }
 
+    /* Cards com mais sombra */
+    .card {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Avatar do utilizador */
+    .user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border);
+    }
+
+    /* Inputs maiores */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    /* Tabelas mais arejadas */
+    th, td {
+      padding: 16px 18px;
+    }
+
     /* Titles */
     .page-title {
       font-size: 32px;
@@ -485,14 +517,33 @@
     /* Barra de Ocupação */
     .occ-bar {
       position: relative;
-      height: 50px;
+      height: 60px;
       background: #0d0d1a;
       border-radius: 8px;
       overflow: hidden;
       margin: 12px 0;
       border: 1px solid var(--border);
     }
-
+    .time-slot {
+      padding:10px;
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size:12px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .time-slot.free{
+      padding: 12px;
+      color:#004080;
+      background: #0a2a10;
+      border:1px solid var(--success);
+      color: var(--success);
+    }
+    .time-slot.occupied{
+      background: #000;
+      color: #000;
+      cursor:not-allowed;
+    }
     .occ-segment {
       position: absolute;
       height: 100%;
@@ -611,12 +662,6 @@
       justify-content: center;
       z-index: 1000;
       padding: 24px;
-      animation: fadeIn 0.2s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
     }
 
     .modal-backdrop.active {
@@ -763,8 +808,7 @@
         </div>
         <a href="/logout">Sair</a>
       {% else %}
-        <a href="/login">Entrar</a>
-        <a href="/register" class="btn btn-primary">Criar Conta</a>
+        <a href="/login" class="btn btn-primary">Entrar</a>
       {% endif %}
     </nav>
   </header>
@@ -799,25 +843,6 @@
         if (e.target.classList.contains('modal-backdrop')) {
           backdrop.classList.remove('active');
         }
-      });
-    });
-
-    // Tooltip para horários (ao passar o rato)
-    document.querySelectorAll('.occ-segment').forEach(segment => {
-      segment.addEventListener('mouseenter', (e) => {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'time-tooltip';
-        tooltip.textContent = e.target.getAttribute('data-title');
-        document.body.appendChild(tooltip);
-        
-        const rect = e.target.getBoundingClientRect();
-        tooltip.style.left = rect.left + 'px';
-        tooltip.style.top = (rect.top - 40) + 'px';
-      });
-      
-      segment.addEventListener('mouseleave', () => {
-        const tooltip = document.querySelector('.time-tooltip');
-        if (tooltip) tooltip.remove();
       });
     });
   </script>

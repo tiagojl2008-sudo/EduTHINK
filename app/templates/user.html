@@ -1,13 +1,46 @@
 {% extends "base.html" %}
 {% block title %}A Minha Conta{% endblock %}
 {% block content %}
+
+<style>
+  /* Garantir que o modal de perfil está sempre acima */
+  #modal-profile {
+    z-index: 1001 !important;
+  }
+
+  /* Separar modais */
+  .modal-backdrop {
+    display: none;
+  }
+
+  .modal-backdrop.active {
+    display: flex !important;
+  }
+  
+  /* Garantir centralização da foto de perfil no modal */
+  .card:first-child {
+    justify-content: center;
+    text-align: center;
+  }
+  
+  /* Centralizar input do ficheiro no modal */
+  input[type="file"] {
+    max-width: 300px;
+    margin: 0 auto;
+    display: block;
+  }
+  
+  /* Centralizar o botão de editar perfil */
+  .btn-secondary[onclick="openModal('modal-profile')"] {
+    margin: 0 auto;
+    display: block;
+  }
+</style>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-    <div>
-      <h1 class="page-title">Olá, {{ user.name }} 👋</h1>
-      <p class="page-sub">Gerencie as suas reservas e perfil.</p>
-    </div>
-    <button class="btn btn-secondary" onclick="openModal('modal-profile')">✏️ Editar Perfil</button>
+  <div style="text-align: center; margin-bottom: 24px;">
+    <h1 class="page-title" style="display: inline-block;">Olá, {{ user.name }} 👋</h1>
+    <p class="page-sub">Gerencie as suas reservas e perfil.</p>
+    <button class="btn btn-secondary" onclick="openModal('modal-profile')" style="margin-top: 12px;">✏️ Editar Perfil</button>
   </div>
 
   {% if error %}
@@ -21,15 +54,15 @@
   {% endif %}
 
   <!-- Cartão de Info do Utilizador -->
-  <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; gap: 20px;">
+  <div class="card" style="margin-bottom: 32px; display: flex; align-items: center; justify-content: center; gap: 20px; max-width: 600px; margin-left: auto; margin-right: auto;">
     <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0;">
       {{ user.name[0].upper() }}
     </div>
-    <div style="flex: 1;">
+    <div style="flex: 1; text-align: center;">
       <div style="font-weight: 700; font-size: 18px;">{{ user.name }}</div>
       <div style="color: var(--text-muted); font-size: 14px;">{{ user.email }}</div>
     </div>
-    <div style="text-align: right;">
+    <div style="text-align: center;">
       <div style="font-size: 12px; color: var(--text-muted);">Tipo de Conta</div>
       <span class="tag tag-{{ 'orange' if user.role == 'admin' else 'blue' }}">{{ user.role }}</span>
     </div>
@@ -71,25 +104,25 @@
     <form method="post" action="/user/update" enctype="multipart/form-data">
       <div style="text-align: center; margin-bottom: 20px;">
         {% if user.avatar %}
-          <img src="{{ user.avatar }}" alt="Avatar" 
+          <img src="{{ user.avatar }}" alt="Avatar"
                style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
         {% else %}
-          <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); 
+          <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-hover));
                       display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 700; color: white; margin: 0 auto;
                       box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
             {{ user.name[0].upper() }}
           </div>
         {% endif %}
       </div>
-      
+
       <div class="form-group">
-        <label class="lbl">Foto de Perfil</label>
-        <input type="file" name="avatar" accept="image/*" style="width: 100%;">
-        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-          📷 Formatos: JPG, PNG, GIF. Máx: 2MB.
+        <label class="lbl" style="text-align: center;">Foto de Perfil</label>
+        <input type="file" name="avatar" accept="image/*" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; text-align: center;">
+          JPG, PNG ou GIF. Máx 2MB.
         </p>
       </div>
-      
+
       <div class="form-group">
         <label class="lbl">Nome / Nickname</label>
         <input type="text" name="name" value="{{ user.name }}" required>
@@ -102,7 +135,7 @@
         <label class="lbl">Nova Palavra-passe (deixar vazio para manter)</label>
         <input type="password" name="password" placeholder="••••••••" minlength="6">
       </div>
-      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 8px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-profile')">Cancelar</button>
         <button type="submit" class="btn btn-primary">Guardar Alterações</button>
       </div>
@@ -152,9 +185,26 @@
   </div>
 </div>
 
+<script>
+  function openModal(id) {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-backdrop')) {
+        backdrop.classList.remove('active');
+      }
+    });
+  });
+</script>
+
 <style>
-  .tag-blue { 
-    background: rgba(0, 102, 204, 0.15); 
+  .tag-blue {
+    background: rgba(0, 102, 204, 0.15);
     color: var(--primary);
     border: 1px solid rgba(0, 102, 204, 0.3);
   }

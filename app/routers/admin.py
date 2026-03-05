@@ -9,6 +9,10 @@ from ..utils import require_admin
 router = APIRouter(prefix="/admin")
 
 
+# ===================================================================
+# ADMIN HOME
+# ===================================================================
+
 @router.get("")
 async def home(request: Request, db=Depends(get_db)):
     """Página inicial do painel administrativo."""
@@ -18,6 +22,7 @@ async def home(request: Request, db=Depends(get_db)):
     today = str(date_type.today())
     today_res = db.query(models.Reservation).filter(models.Reservation.date == today).all()
     total_res = db.query(models.Reservation).count()
+    
     return request.app.state.templates.TemplateResponse(
         "admin.html",
         {
@@ -31,7 +36,9 @@ async def home(request: Request, db=Depends(get_db)):
     )
 
 
-# === CRUD de salas ===
+# ===================================================================
+# SALAS
+# ===================================================================
 
 @router.get("/rooms")
 async def rooms(request: Request, db=Depends(get_db)):
@@ -58,7 +65,6 @@ async def create_room(
 ):
     require_admin(request, db)
     
-    # Validar dias úteis
     if not work_days:
         rooms = db.query(models.Room).all()
         return request.app.state.templates.TemplateResponse(
@@ -95,7 +101,6 @@ async def update_room(
 ):
     require_admin(request, db)
     
-    # Validar dias úteis
     if not work_days:
         rooms = db.query(models.Room).all()
         return request.app.state.templates.TemplateResponse(
@@ -106,6 +111,7 @@ async def update_room(
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
     if not room:
         raise HTTPException(status_code=404)
+    
     room.name = name
     room.capacity = capacity
     room.location = location
@@ -127,7 +133,96 @@ async def delete_room(request: Request, room_id: int, db=Depends(get_db)):
     return RedirectResponse(url="/admin/rooms", status_code=303)
 
 
-# === Ver reservas ===
+# ===================================================================
+# UTILIZADORES
+# ===================================================================
+
+@router.get("/users")
+async def users(request: Request, db=Depends(get_db)):
+    user = require_admin(request, db)
+    users = db.query(models.User).all()
+    return request.app.state.templates.TemplateResponse(
+        "admin_users.html",
+        {"request": request, "user": user, "users": users, "error": None},
+    )
+
+
+@router.post("/users/create")
+async def create_user(
+    request: Request,
+    name: str = Form(...),
+    email: str = Form(...),
+    role: str = Form(default="user"),
+    db=Depends(get_db),
+):
+    require_admin(request, db)
+    
+    # Verificar se email já existe
+    existing = db.query(models.User).filter(models.User.email == email).first()
+    if existing:
+        users = db.query(models.User).all()
+        return request.app.state.templates.TemplateResponse(
+            "admin_users.html",
+            {"request": request, "user": require_admin(request, db), "users": users, "error": "Este email já está registado."},
+        )
+    
+    # Criar utilizador (password vazia, usa LDAP)
+    new_user = models.User(
+        name=name,
+        email=email,
+        password="",
+        role=role
+    )
+    db.add(new_user)
+    db.commit()
+    return RedirectResponse(url="/admin/users", status_code=303)
+
+
+@router.post("/users/update/{user_id}")
+async def update_user(
+    request: Request,
+    user_id: int,
+    name: str = Form(...),
+    email: str = Form(...),
+    role: str = Form(default="user"),
+    db=Depends(get_db),
+):
+    require_admin(request, db)
+    
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404)
+    
+    # Verificar email duplicado
+    if email != target.email:
+        existing = db.query(models.User).filter(models.User.email == email).first()
+        if existing and existing.id != user_id:
+            users = db.query(models.User).all()
+            return request.app.state.templates.TemplateResponse(
+                "admin_users.html",
+                {"request": request, "user": require_admin(request, db), "users": users, "error": "Este email já está em uso."},
+            )
+    
+    target.name = name
+    target.email = email
+    target.role = role
+    db.commit()
+    return RedirectResponse(url="/admin/users", status_code=303)
+
+
+@router.post("/users/delete/{user_id}")
+async def delete_user(request: Request, user_id: int, db=Depends(get_db)):
+    require_admin(request, db)
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if target:
+        db.delete(target)
+        db.commit()
+    return RedirectResponse(url="/admin/users", status_code=303)
+
+
+# ===================================================================
+# RESERVAS
+# ===================================================================
 
 @router.get("/reservations")
 async def reservations(request: Request, db=Depends(get_db)):
@@ -135,13 +230,12 @@ async def reservations(request: Request, db=Depends(get_db)):
     reservations = db.query(models.Reservation).order_by(models.Reservation.date.desc(), models.Reservation.start_time).all()
     rooms_list = db.query(models.Room).all()
     rooms = {r.id: r for r in rooms_list}
+    
     return request.app.state.templates.TemplateResponse(
         "admin_reservations.html",
         {"request": request, "user": user, "reservations": reservations, "rooms": rooms},
     )
 
-
-# === Editar reservas ===
 
 @router.post("/reservations/update/{res_id}")
 async def update_reservation(
@@ -158,6 +252,7 @@ async def update_reservation(
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
     if not res:
         raise HTTPException(status_code=404)
+    
     res.title = title
     res.room_id = room_id
     res.date = date

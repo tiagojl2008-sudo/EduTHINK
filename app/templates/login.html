@@ -14,8 +14,8 @@
       {% endif %}
       <form method="post" action="/login">
         <div class="form-group">
-          <label class="lbl">Email</label>
-          <input type="email" name="email" placeholder="email@exemplo.pt" required>
+          <label class="lbl">Username / Email</label>
+          <input type="text" name="username" placeholder="email@exemplo.pt" required>
         </div>
         <div class="form-group">
           <label class="lbl">Palavra-passe</label>
@@ -24,9 +24,6 @@
         <button class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;" type="submit">Entrar</button>
       </form>
     </div>
-    <p style="text-align: center; color: #555; font-size: 12px; margin-top: 16px;">
-      Não tens conta? <a href="/register" style="color: var(--primary); text-decoration: none; font-weight: 600;">Criar conta</a>
-    </p>
   </div>
 </div>
 {% endblock %}

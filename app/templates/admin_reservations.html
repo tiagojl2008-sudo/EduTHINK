@@ -2,7 +2,10 @@
 {% block title %}Reservas{% endblock %}
 {% block content %}
 <div class="container">
-  <h1 class="page-title">Lista completa de reservas</h1>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 class="page-title">Lista completa de reservas</h1>
+    <a href="/dashboard" class="btn btn-primary">+ Nova Reserva</a>
+  </div>
 
   <div class="admin-tabs">
     <a class="admin-tab" href="/admin">Visão Geral</a>

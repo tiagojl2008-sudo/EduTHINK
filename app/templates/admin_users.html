@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Utilizadores{% endblock %}
 {% block content %}
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.add('active');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+</script>
+
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 12px;">
     <h1 class="page-title">Gestão de Utilizadores</h1>
@@ -50,7 +60,14 @@
               </div>
             </td>
           </tr>
-
+#Campo de role ou seja, cargo
+<div class="form-group">
+<label class="lbl">Função</label>
+<select name="role">
+  <option value="user">Utilizador</option>
+  <option value="admin">Adminstador</option>
+</select>
+</div>
           <!-- MODAL EDITAR USER -->
           <div class="modal-backdrop" id="modal-edit-user-{{ u.id }}">
             <div class="modal">

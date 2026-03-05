@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
+<style>
+  /*Centrar cards de sala*/
+  #tab-rooms>div{
+    justify-content: center;
+  }
+</style>
+/*Centrar moldal*/
+.modal{
+  max-width:500px;
+  margin:auto;
+}
+/*Centrar conteúdo do modal*/
+.modal .modal-content{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+7*Centrar inputs de data e hora*/
+max-width:400px;
+margin:0 auto;
+</style>
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;">
     <div>
@@ -55,7 +76,7 @@
             {% for r in room_res | sort(attribute='start_time') %}
               <div style="margin-top: 4px;">⏱ {{ r.start_time }}–{{ r.end_time }} · {{ r.title }}</div>
             {% endfor %}
-            {% if not room_res %} Sem reservas hoje {% endif %}
+            {% if not roomf_res %} Sem reservas hoje {% endif %}
           </div>
         </div>
       {% endfor %}
@@ -91,7 +112,40 @@
     {% endif %}
   </div>
 </div>
+<style>
+  /*iMPUTS DE DATA E HORA COM COM DIFERENTES*/
+  input[type="date"],input[type="time"]:focus{
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+  */Estilo dos slots de tempo*/
+  .time-slot free{
+    background: #e8f5e9;
+    color: #fff;
+    border-color:#4caf50
+  }
+  .time-slot taken{
+    background:#ffebee !important;
+    color:#fff !important;
+    border-color:#f44336 !important;
+  }
+  */Tags mais claras*/
+  .tag-orange{
+    background-color: #ff9800;
+    color: #fff;
+  }
+  */Modal mais claro*/
+  .modal{
+    background:#ffff !important;
+    border:1px solid #e0e0e0 !important;
 
+.modal-title{
+  background: #f57faf !important
+  border-bottom: 1px solid #e0e0e0 !important;
+    color: #1a1a1a !important;
+}  
+
+}
 <!-- MODAL: CRIAR RESERVA -->
 <div class="modal-backdrop" id="modal-create">
   <div class="modal">
@@ -146,3 +200,62 @@
   {% endif %}
 </script>
 {% endblock %}
+<!--Horário Semanal-->
+<div class="card" style="margin-top:12px;">
+  <div class="card-title">Horário Semanal</div>
+  <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 16px;">
+    {% for day in ['Seg', 'Ter',"Quarta",'Quinta','Sexta','Sabádo','Domingo'] %}
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap 8px;">
+      <!--Segunda-->
+      <div class="day-column">
+        <h4>Segunda</h4>
+        <div class="time-slot free">8:00-9:00</div>
+        <div class="time-slot taken">9:00-10:00</div> </div>
+        <div class="time-slot free">10:00-11:00</div>
+        </div>
+      <!--Terça-->
+      <div class="day-column">
+        <h4>Terça</h4>
+        <div class="time-slot free">8:00-9:00</div>
+        <div class="time-slot free">9:00-10:00</div>
+        <div class="time-slot taken">10:00-11:00</div>
+        </div>
+      <!--Quarta-->
+      <div class="day-column">
+        <h4>Quarta</h4>
+        <div class="time-slot taken">8:00-9:00</div>
+        <div class="time-slot taken">9:00-10:00</div>
+        <div class="time-slot free">10:00-11:00</div>
+
+      </div>
+      <!--Quinta-->
+      <div class="day-column">
+        <h4>Quinta</h4>
+        <div class="time-slot free">8:00-9:00</div>
+        <div class="time-slot taken">9:00-10:00</div>
+        <div class="time-slot free">10:00-11:00</div>
+      </div>
+      <!--Sexta-->
+      <div class="day-column">
+        <h4>Sexta</h4>
+        <div class="time-slot taken">8:00-9:00</div>
+        <div class="time-slot free">9:00-10:00</div>
+        <div class="time-slot taken">10:00-11:00</div>
+      </div>
+      <!--Sábado-->
+      <div class="day-column">
+        <h4>Sábado</h4>
+        <div class="time-slot free">8:00-9:00</div>
+        <div class="time-slot free">9:00-10:00</div>
+        <div class="time-slot free">10:00-11:00</div>
+      </div>
+      <!--Domingo-->
+      <div class="day-column">
+        <h4>Domingo</h4>
+        <div class="time-slot free">8:00-9:00</div>
+        <div class="time-slot taken">9:00-10:00</div>
+        <div class="time-slot free">10:00-11:00</div>
+      </div>
+    {% endfor %}
+  </div>
+    </div>"

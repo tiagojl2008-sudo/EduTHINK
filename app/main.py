@@ -3,6 +3,8 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+import os
 
 from . import models
 from .database import engine
@@ -12,6 +14,7 @@ from .database import engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod"))
 templates = Jinja2Templates(directory="app/templates")
 app.state.templates = templates
 
