@@ -1,0 +1,7 @@
+services:
+  ldap:
+    image: rroemhild/test-openldap
+    container_name: ldap-test-local
+    ports:
+      - "1389:10389"
+    restart: unless-stopped
