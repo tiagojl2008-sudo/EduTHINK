@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Gestão_Salas{% endblock %}</title>
+  <title>{% block title %}EduTHINK{% endblock %}</title>
   <style>
     :root {
       --primary: #0066cc;
@@ -353,9 +353,23 @@
 
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: var(--primary);
+      border-color: #33aa66;
       background: rgba(13, 13, 26, 0.8);
-      box-shadow: 0 0 0 3px var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(51, 170, 102, 0.15);
+    }
+
+    /* Ícones de calendário e relógio - verde */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(40%) sepia(80%) saturate(400%) hue-rotate(90deg) brightness(95%) contrast(90%);
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator:hover,
+    input[type="time"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
+      filter: invert(45%) sepia(85%) saturate(500%) hue-rotate(90deg) brightness(100%) contrast(95%);
     }
 
     .grid2 {
@@ -448,12 +462,23 @@
       font-weight: 600;
     }
 
-    /* Reservation Items */
+    /* Reservation Items - Tema Verde e Preto */
     .reservation-item {
       display: flex;
       align-items: center;
       gap: 16px;
       padding: 18px 24px !important;
+      background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%) !important;
+      border: 1px solid #2a2a3e !important;
+      border-left: 4px solid #33aa66 !important;
+      box-shadow: 0 4px 12px rgba(51, 170, 102, 0.15) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .reservation-item:hover {
+      border-left-color: #52b788 !important;
+      box-shadow: 0 6px 20px rgba(51, 170, 102, 0.25) !important;
+      transform: translateX(4px) !important;
     }
 
     .reservation-color {
@@ -461,6 +486,7 @@
       height: 50px;
       border-radius: 3px;
       flex-shrink: 0;
+      background: #33aa66 !important;
     }
 
     .reservation-info {
@@ -471,19 +497,21 @@
       font-weight: 700;
       font-size: 16px;
       margin-bottom: 4px;
+      color: #f0f0f5 !important;
     }
 
     .reservation-meta {
       font-size: 13px;
-      color: var(--text-muted);
+      color: #8888aa !important;
     }
 
     .reservation-time {
+      background: rgba(51, 170, 102, 0.15) !important;
+      color: #52b788 !important;
+      border: 1px solid rgba(51, 170, 102, 0.3) !important;
       font-family: 'Consolas', 'Monaco', monospace;
       font-size: 14px;
-      color: var(--primary);
       font-weight: 600;
-      background: var(--primary-light);
       padding: 6px 12px;
       border-radius: 8px;
     }

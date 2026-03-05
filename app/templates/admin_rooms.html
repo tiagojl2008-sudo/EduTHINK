@@ -17,7 +17,8 @@
 
   {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+  {% if rooms %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
     {% for room in rooms %}
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
@@ -91,6 +92,13 @@
       </div>
     {% endfor %}
   </div>
+  {% else %}
+    <div class="card card-empty" style="text-align: center; padding: 48px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+      <p style="color: var(--text-muted);">Ainda não existem salas registadas.</p>
+      <button class="btn btn-primary" onclick="openModal('modal-create-room')" style="margin-top: 16px;">+ Criar Primeira Sala</button>
+    </div>
+  {% endif %}
 </div>
 
 <!-- MODAL CRIAR SALA -->
@@ -132,15 +140,29 @@
 
 <script>
   // Tornar checkboxes de dias visuais
-  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
-    cb.addEventListener('change', function() {
-      const lbl = this.closest('label');
-      if (!lbl) return;
-      if (this.checked) {
-        lbl.style.borderColor = '#52b788'; lbl.style.background = '#0a2a10'; lbl.style.color = '#52b788';
-      } else {
-        lbl.style.borderColor = '#2a2a3e'; lbl.style.background = '#111120'; lbl.style.color = '#666';
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      // Atualizar estado inicial
+      const lbl = cb.closest('label');
+      if (lbl && cb.checked) {
+        lbl.style.borderColor = '#52b788';
+        lbl.style.background = '#0a2a10';
+        lbl.style.color = '#52b788';
       }
+      
+      cb.addEventListener('change', function() {
+        const label = this.closest('label');
+        if (!label) return;
+        if (this.checked) {
+          label.style.borderColor = '#52b788';
+          label.style.background = '#0a2a10';
+          label.style.color = '#52b788';
+        } else {
+          label.style.borderColor = '#2a2a3e';
+          label.style.background = '#111120';
+          label.style.color = '#666';
+        }
+      });
     });
   });
 </script>

@@ -1,14 +1,13 @@
 # 🏢 Gestão de Salas
 
-Sistema de gestão de reservas de salas simples e moderno.
+Sistema de gestão de reservas de salas com autenticação LDAP.
 
 ---
 
 ## 🚀 Funcionalidades
 
 ### Utilizadores Normais
-- ✅ **Criar conta** - Registo com nickname/nome
-- ✅ **Fazer login** - Acesso com email e password
+- ✅ **Login LDAP** - Autenticação com servidor LDAP
 - ✅ **Ver salas** - Consulta de salas disponíveis
 - ✅ **Criar reservas** - Reserva de salas por horário
 - ✅ **Gerir reservas** - Eliminar as suas reservas
@@ -30,7 +29,7 @@ Sistema de gestão de reservas de salas simples e moderno.
 | `/dashboard` | ✅ | ✅ |
 | `/user` | ✅ | ❌ Bloqueado |
 | `/admin` | ❌ Bloqueado | ✅ |
-| `/register` | ✅ | ❌ (não faz sentido) |
+| `/` (público) | ✅ | ✅ |
 
 ---
 
@@ -38,7 +37,7 @@ Sistema de gestão de reservas de salas simples e moderno.
 
 ### 1. Clonar o projeto
 ```bash
-cd C:\Users\tiago\Desktop\projeto
+cd C:\Users\tiago\Documents\EduTHINK
 ```
 
 ### 2. Criar ambiente virtual
@@ -52,15 +51,28 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 4. Executar o servidor
+### 4. Iniciar servidor LDAP de teste (opcional)
+```bash
+cd ldap-test
+docker-compose up -d
+```
+
+**Credenciais de teste:**
+| Username | Password |
+|----------|----------|
+| tiago    | password |
+| user1    | password |
+| admin    | admin    |
+
+### 5. Executar o servidor
 ```bash
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### 5. Aceder à aplicação
+### 6. Aceder à aplicação
 - **Público:** http://127.0.0.1:8000
 - **Login:** http://127.0.0.1:8000/login
-- **Registo:** http://127.0.0.1:8000/register
+- **Dashboard:** http://127.0.0.1:8000/dashboard
 
 ---
 
@@ -74,6 +86,27 @@ Na primeira execução, é criado automaticamente:
 | **Password** | `admin123` |
 
 ⚠️ **Importante:** Altera a password após o primeiro login!
+
+---
+
+## 🔧 Configuração LDAP
+
+Edita o ficheiro `ldap-test\.env`:
+
+```env
+LDAP_SERVER_URI=ldap://localhost:389
+LDAP_USER_DN_TEMPLATE=cn={username},dc=test,dc=local
+LDAP_USER_DOMAIN=test.local
+LDAP_DEBUG=true
+```
+
+### Para usar um servidor LDAP real:
+
+```env
+LDAP_SERVER_URI=ldap://teu-servidor:389
+LDAP_USER_DN_TEMPLATE=cn={username},ou=users,dc=empresa,dc=pt
+LDAP_USER_DOMAIN=empresa.pt
+```
 
 ---
 

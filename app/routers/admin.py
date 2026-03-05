@@ -43,8 +43,15 @@ async def home(request: Request, db=Depends(get_db)):
 @router.get("/rooms")
 async def rooms(request: Request, db=Depends(get_db)):
     """Listar todas as salas."""
-    user = require_admin(request, db)
+    try:
+        user = require_admin(request, db)
+        print(f"[DEBUG] User admin: {user.name} (id={user.id})")
+    except Exception as e:
+        print(f"[DEBUG] Erro require_admin: {e}")
+        raise
+    
     rooms = db.query(models.Room).all()
+    print(f"[DEBUG] /admin/rooms - {len(rooms)} salas encontradas")
     return request.app.state.templates.TemplateResponse(
         "admin_rooms.html",
         {"request": request, "user": user, "rooms": rooms, "error": None},

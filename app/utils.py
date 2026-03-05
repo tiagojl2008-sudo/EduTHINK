@@ -1,9 +1,12 @@
 from fastapi import Request, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
+import logging
 
 from . import models
 from .database import get_db
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
@@ -11,12 +14,20 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     uid = request.cookies.get("user_id")
     if not uid:
         return None
-    return db.query(models.User).filter(models.User.id == int(uid)).first()
+    try:
+        user = db.query(models.User).filter(models.User.id == int(uid)).first()
+        if user:
+            logger.info(f"User encontrado: {user.name} (id={user.id})")
+        return user
+    except Exception as e:
+        logger.error(f"Erro ao ler user: {e}")
+        return None
 
 
 def require_login(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
+        logger.warning("User não logado")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     return user
 
@@ -24,7 +35,9 @@ def require_login(request: Request, db: Session = Depends(get_db)):
 def require_admin(request: Request, db: Session = Depends(get_db)):
     user = require_login(request, db)
     if user.role != "admin":
+        logger.warning(f"User {user.name} não é admin (role={user.role})")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    logger.info(f"Admin {user.name} autenticado")
     return user
 
 

@@ -1,5 +1,5 @@
 import hashlib
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -7,11 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 import os
 
 from . import models
-from .database import engine
-
-# helper utilities have been moved to app/utils.py
-
-models.Base.metadata.create_all(bind=engine)
+from .database import get_db
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod"))
@@ -50,11 +46,11 @@ async def create_default_admin():
 async def http_exception_handler(request: Request, exc: HTTPException):
     from .utils import get_current_user
     from .database import SessionLocal
-    
+
     db = SessionLocal()
     user = get_current_user(request, db)
     db.close()
-    
+
     if exc.status_code == 403:
         return templates.TemplateResponse(
             "error.html",
@@ -66,6 +62,20 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         {"request": request, "user": user, "detail": str(exc.detail)},
         status_code=exc.status_code
     )
+
+
+# Endpoint de debug para testar autenticação
+@app.get("/debug/auth")
+async def debug_auth(request: Request, db=Depends(get_db)):
+    from .utils import get_current_user, require_admin
+    user = get_current_user(request, db)
+    is_admin = user.role == "admin" if user else False
+    return {
+        "logged_in": user is not None,
+        "is_admin": is_admin,
+        "user_id": request.cookies.get("user_id"),
+        "user": {"name": user.name, "email": user.email, "role": user.role} if user else None,
+    }
 
 
 if __name__ == "__main__":

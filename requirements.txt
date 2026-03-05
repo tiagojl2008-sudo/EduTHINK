@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 jinja2
+ldap3
+python-multipart

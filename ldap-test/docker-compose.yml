@@ -1,0 +1,27 @@
+version: '3'
+services:
+  ldap:
+    image: osixia/openldap:latest
+    container_name: ldap-test
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_ORGANISATION: "Test Org"
+      LDAP_DOMAIN: "test.local"
+      LDAP_ADMIN_PASSWORD: "admin"
+    volumes:
+      - ./ldap-data:/var/lib/ldap
+      - ./ldap-config:/etc/ldap/slapd.d
+    restart: unless-stopped
+
+  ldap-ui:
+    image: osixia/phpldapadmin:latest
+    container_name: ldap-ui
+    ports:
+      - "6443:443"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: ldap
+    depends_on:
+      - ldap
+    restart: unless-stopped

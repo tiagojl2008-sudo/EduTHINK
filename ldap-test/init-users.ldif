@@ -1,0 +1,41 @@
+# Utilizador: tiago
+dn: cn=tiago,dc=test,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: tiago
+sn: Ferreira
+uid: tiago
+uidNumber: 1001
+gidNumber: 1001
+homeDirectory: /home/tiago
+mail: tiago@test.local
+userPassword: {SSHA}password
+
+# Utilizador: user1
+dn: cn=user1,dc=test,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: user1
+sn: User
+uid: user1
+uidNumber: 1002
+gidNumber: 1002
+homeDirectory: /home/user1
+mail: user1@test.local
+userPassword: {SSHA}password
+
+# Utilizador: user2
+dn: cn=user2,dc=test,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: user2
+sn: User
+uid: user2
+uidNumber: 1003
+gidNumber: 1003
+homeDirectory: /home/user2
+mail: user2@test.local
+userPassword: {SSHA}password

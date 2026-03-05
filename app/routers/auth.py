@@ -31,8 +31,8 @@ logger.propagate = False
 
 class LDAPAuthenticator:
     def __init__(self) -> None:
-        self.server_uri = os.getenv("LDAP_SERVER_URI", "ldap://localhost:389")
-        self.base_dn = os.getenv("LDAP_BASE_DN", "")
+        self.server_uri = os.getenv("LDAP_SERVER_URI", "ldap://127.0.0.1:1389")
+        self.base_dn = os.getenv("LDAP_BASE_DN", "ou=people,dc=planetexpress,dc=com")
         self.user_dn_template = os.getenv("LDAP_USER_DN_TEMPLATE", "")
         self.user_domain = os.getenv("LDAP_USER_DOMAIN", "")
         self.ntlm_domain = os.getenv("LDAP_NTLM_DOMAIN", "")
@@ -69,33 +69,47 @@ class LDAPAuthenticator:
             server = Server(self.server_uri, get_info=ALL)
             if debug:
                 logger.info("LDAP server configured: %s", self.server_uri)
-            for bind_user in self._build_bind_candidates(username):
-                try:
-                    if debug:
-                        logger.info("LDAP bind attempt with user format: %s", bind_user)
-                    conn = Connection(
-                        server,
-                        user=bind_user,
-                        password=password,
-                        auto_bind=True,
-                        raise_exceptions=True,
-                    )
-                    conn.unbind()
-                    if debug:
-                        logger.info("LDAP bind success for: %s", bind_user)
-                    return True
-                except Exception as exc:
-                    if debug:
-                        logger.warning(
-                            "LDAP bind failed for %s: %s: %s",
-                            bind_user,
-                            type(exc).__name__,
-                            exc,
-                        )
-                    continue
+            
+            # Primeiro, pesquisar o DN do utilizador
+            conn_search = Connection(server, auto_bind=True)
+            search_filter = f"(uid={username})"
+            conn_search.search(self.base_dn, search_filter, attributes=['cn', 'uid'])
+            
+            if not conn_search.entries:
+                if debug:
+                    logger.warning("LDAP user not found: %s", username)
+                conn_search.unbind()
+                return False
+            
+            # Obter o DN do primeiro resultado
+            user_dn = conn_search.entries[0].entry_dn
             if debug:
-                logger.error("LDAP auth failed for username: %s", username)
-            return False
+                logger.info("LDAP user found DN: %s", user_dn)
+            conn_search.unbind()
+            
+            # Tentar autenticar com o DN encontrado
+            try:
+                conn = Connection(
+                    server,
+                    user=str(user_dn),
+                    password=password,
+                    auto_bind=True,
+                    raise_exceptions=True,
+                )
+                conn.unbind()
+                if debug:
+                    logger.info("LDAP bind success for: %s", username)
+                return True
+            except Exception as exc:
+                if debug:
+                    logger.warning(
+                        "LDAP bind failed for %s: %s: %s",
+                        username,
+                        type(exc).__name__,
+                        exc,
+                    )
+                return False
+                
         except Exception as exc:
             if debug:
                 logger.exception("LDAP server/connect error: %s: %s", type(exc).__name__, exc)
@@ -112,17 +126,30 @@ async def login_page(request: Request):
 
 @router.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...), db = Depends(get_db)):
+    import hashlib
+    
+    # Tentar autenticação local primeiro (para admin e users na BD)
+    user = db.query(models.User).filter(models.User.email == username).first()
+    
+    if user and user.password:
+        # User existe na BD com password - autenticação local
+        hashed = hashlib.sha256(password.encode()).hexdigest()
+        if hashed == user.password or password == user.password:
+            # Login local bem sucedido
+            resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+            resp.set_cookie("user_id", str(user.id), httponly=True, max_age=60*60*24*7)
+            return resp
+    
+    # Tentar autenticação LDAP
     if authenticator.authenticate(username=username, password=password):
-        # Buscar user na BD pelo username (email)
-        user = db.query(models.User).filter(models.User.email == username).first()
+        # User não existe na BD - criar automaticamente
         if not user:
-            # User não existe na BD - criar automaticamente
             user = models.User(name=username, email=username, password="", role="user")
             db.add(user)
             db.commit()
             db.refresh(user)
         
-        # Guardar user_id em cookie (não guardar password)
+        # Login LDAP bem sucedido
         resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
         resp.set_cookie("user_id", str(user.id), httponly=True, max_age=60*60*24*7)
         return resp
@@ -132,7 +159,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
         "login.html",
         {
             "request": request,
-            "error": "Invalid credentials or LDAP server unavailable.",
+            "error": "Credenciais inválidas ou servidor LDAP indisponível.",
         },
         status_code=status.HTTP_401_UNAUTHORIZED,
     )
