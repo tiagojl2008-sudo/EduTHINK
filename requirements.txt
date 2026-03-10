@@ -4,3 +4,5 @@ sqlalchemy
 jinja2
 ldap3
 python-multipart
+pytest
+httpx

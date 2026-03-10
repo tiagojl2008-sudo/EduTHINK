@@ -1,0 +1,36 @@
+{%extends "base.html"%}
+{% block title %}Iventário{% endblock %}
+{% block content %}
+<div class="conatiner">
+    <h1 class="page-title">Iventário de Equipamentos</h1>
+<button class="btn btn-primary" onclick=""openModal('modal-create')">+ Novo Equipamento</button>
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Quantidade</th>
+            <th>Sala</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbdoy>
+        {% for item in equipment %}
+        <tr>
+            <td>{{item.name}}</td>
+            <td>{{item.decription}}</td>
+            <td>{{item.quantity}}</td>
+            <td>{{item.room.name}}</td>
+        </td>
+        <button onclick="openModal('modal-edit-{{item.id}}')">Editar</button>
+        <form method="post" action="admin/iventroy/delete/{{item.id}}"
+        style="display:inline;"></form>
+        <button type="submit" class="btn-danger">Eliminar</button>
+    </from>
+</td>
+</tr>
+{% endfor %}
+</tbdoy>
+</table>
+</div>
+<!--Criar Modal-->

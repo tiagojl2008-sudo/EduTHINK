@@ -3,40 +3,44 @@
 {% block content %}
 
 <style>
-  /* Inputs de data e hora - Tema verde */
+  /* Inputs de data e hora - Tema claro */
   input[type="date"],
   input[type="time"] {
-    background: rgba(13, 13, 26, 0.8) !important;
-    color: #f0f0f5 !important;
-    border: 1px solid #2a2a3e !important;
+    background: #FFFFFF !important;
+    color: #212121 !important;
+    border: 1px solid #E0E0E0 !important;
   }
 
   input[type="date"]:focus,
   input[type="time"]:focus {
-    border-color: #33aa66 !important;
-    background: rgba(13, 13, 26, 0.95) !important;
-    box-shadow: 0 0 0 3px rgba(51, 170, 102, 0.15) !important;
+    border-color: #D32F2F !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1) !important;
   }
 
-  /* Modal mais claro */
+  /* Modal claro */
   .modal {
-    background: #ffffff !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
   }
 
   .modal-title {
-    background: #f5f7fa !important;
-    color: #1a1a2e !important;
+    background: #F5F5F5 !important;
+    color: #212121 !important;
+    border-bottom: 1px solid #E0E0E0 !important;
   }
 
-  /* Tags mais claras */
+  /* Tags profissionais */
   .tag-green {
-    background: #e8f5e9 !important;
-    color: #2e7d32 !important;
+    background: rgba(56, 142, 60, 0.1) !important;
+    color: #388E3C !important;
+    border: 1px solid rgba(56, 142, 60, 0.2) !important;
   }
 
   .tag-orange {
-    background: #fff3e0 !important;
-    color: #ef6c00 !important;
+    background: rgba(245, 124, 0, 0.1) !important;
+    color: #F57C00 !important;
+    border: 1px solid rgba(245, 124, 0, 0.2) !important;
   }
 
   /* Slots de horário maiores */
@@ -47,10 +51,10 @@
 
   /* Hover nos slots livres */
   .time-slot.free:hover {
-    background: var(--success) !important;
+    background: #388E3C !important;
     color: #fff !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(51, 170, 102, 0.3);
+    box-shadow: 0 4px 12px rgba(56, 142, 60, 0.3);
   }
 
   /* Hover na navegação da semana */
@@ -61,40 +65,40 @@
 
   /* Modal - apenas ajustes específicos */
   .modal-title {
-    background: #f5f7fa;
-    color: #1a1a2e;
+    background: #F5F5F5;
+    color: #212121;
   }
 
-  /* Estilo das reservas - Tema preto e verde */
+  /* Estilo das reservas - Tema claro */
   .reservation-item {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%) !important;
-    border: 1px solid #2a2a3e !important;
-    border-left: 4px solid #33aa66 !important;
-    box-shadow: 0 4px 12px rgba(51, 170, 102, 0.15) !important;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%) !important;
+    border: 1px solid #E0E0E0 !important;
+    border-left: 4px solid #388E3C !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     transition: all 0.3s ease !important;
   }
 
   .reservation-item:hover {
-    border-left-color: #52b788 !important;
-    box-shadow: 0 6px 20px rgba(51, 170, 102, 0.25) !important;
+    border-left-color: #2E7D32 !important;
+    box-shadow: 0 4px 16px rgba(56, 142, 60, 0.2) !important;
     transform: translateX(4px) !important;
   }
 
   .reservation-title {
-    color: #f0f0f5 !important;
+    color: #212121 !important;
     font-weight: 700 !important;
     font-size: 16px !important;
   }
 
   .reservation-meta {
-    color: #8888aa !important;
+    color: #757575 !important;
     font-size: 13px !important;
   }
 
   .reservation-time {
-    background: rgba(51, 170, 102, 0.15) !important;
-    color: #52b788 !important;
-    border: 1px solid rgba(51, 170, 102, 0.3) !important;
+    background: rgba(56, 142, 60, 0.1) !important;
+    color: #388E3C !important;
+    border: 1px solid rgba(56, 142, 60, 0.2) !important;
     font-family: 'Consolas', 'Monaco', monospace !important;
     font-size: 14px !important;
     font-weight: 600 !important;
@@ -102,117 +106,121 @@
     border-radius: 8px !important;
   }
 
-  /* Botão eliminar - vermelho escuro */
+  /* Botão eliminar - vermelho */
   .reservation-item .btn-danger {
-    background: linear-gradient(135deg, #cc3355 0%, #992244 100%) !important;
-    border: 1px solid #cc3355 !important;
+    background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%) !important;
+    border: 1px solid #D32F2F !important;
   }
 
   .reservation-item .btn-danger:hover {
-    background: linear-gradient(135deg, #ff5c8a 0%, #cc3355 100%) !important;
-    box-shadow: 0 4px 12px rgba(204, 51, 85, 0.4) !important;
+    background: linear-gradient(135deg, #B71C1C 0%, #8B0000 100%) !important;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4) !important;
   }
 
-  /* Formulário de reservas - Tema preto e verde */
+  /* Formulário de reservas - Tema claro */
   #modal-create .modal {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%) !important;
-    border: 1px solid #2a2a3e !important;
-    box-shadow: 0 20px 60px rgba(51, 170, 102, 0.2) !important;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%) !important;
+    border: 1px solid #E0E0E0 !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
   }
 
   #modal-create .modal-title {
-    background: rgba(0, 0, 0, 0.3) !important;
-    color: #52b788 !important;
-    border-bottom: 1px solid #2a2a3e !important;
+    background: #F5F5F5 !important;
+    color: #212121 !important;
+    border-bottom: 1px solid #E0E0E0 !important;
   }
 
   #modal-create .modal-close {
-    color: #8888aa !important;
+    color: #757575 !important;
   }
 
   #modal-create .modal-close:hover {
-    color: #52b788 !important;
-    background: rgba(51, 170, 102, 0.15) !important;
+    color: #212121 !important;
+    background: #E0E0E0 !important;
   }
 
   #modal-create .lbl {
-    color: #52b788 !important;
+    color: #D32F2F !important;
   }
 
   #modal-create input,
   #modal-create select {
-    background: rgba(13, 13, 26, 0.8) !important;
-    color: #f0f0f5 !important;
-    border: 1px solid #2a2a3e !important;
+    background: #FFFFFF !important;
+    color: #212121 !important;
+    border: 1px solid #E0E0E0 !important;
   }
 
   #modal-create input:focus,
   #modal-create select:focus {
-    border-color: #33aa66 !important;
-    box-shadow: 0 0 0 3px rgba(51, 170, 102, 0.15) !important;
+    border-color: #D32F2F !important;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1) !important;
   }
 
   #modal-create ::placeholder {
-    color: #555566 !important;
+    color: #9E9E9E !important;
   }
 
   #modal-create .btn-primary {
-    background: linear-gradient(135deg, #33aa66 0%, #2e8b57 100%) !important;
-    border: 1px solid #33aa66 !important;
-    box-shadow: 0 2px 8px rgba(51, 170, 102, 0.3) !important;
+    background: linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%) !important;
+    border: 1px solid #D32F2F !important;
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4) !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
   }
 
   #modal-create .btn-primary:hover {
-    background: linear-gradient(135deg, #52b788 0%, #33aa66 100%) !important;
-    box-shadow: 0 4px 16px rgba(51, 170, 102, 0.4) !important;
+    background: linear-gradient(135deg, #B71C1C 0%, #8B0000 100%) !important;
+    box-shadow: 0 4px 16px rgba(211, 47, 47, 0.5) !important;
+    color: #FFFFFF !important;
   }
 
   #modal-create .btn-secondary {
-    background: #2a2a3e !important;
-    color: #8888aa !important;
-    border: 1px solid #3a3a4e !important;
+    background: #F5F5F5 !important;
+    color: #212121 !important;
+    border: 1px solid #E0E0E0 !important;
+    font-weight: 600 !important;
   }
 
   #modal-create .btn-secondary:hover {
-    background: #3a3a4e !important;
-    color: #f0f0f5 !important;
+    background: #E0E0E0 !important;
+    color: #212121 !important;
   }
 
   /* Cards das Salas - Cores variadas */
   .card.room-blue {
-    border-left: 4px solid #0066cc !important;
-    background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, #1a1a2e 100%) !important;
+    border-left: 4px solid #1976D2 !important;
+    background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, #FFFFFF 100%) !important;
   }
 
   .card.room-blue .room-title {
-    color: #66b3ff !important;
+    color: #1976D2 !important;
   }
 
   .card.room-red {
-    border-left: 4px solid #cc3355 !important;
-    background: linear-gradient(135deg, rgba(204, 51, 85, 0.1) 0%, #1a1a2e 100%) !important;
+    border-left: 4px solid #D32F2F !important;
+    background: linear-gradient(135deg, rgba(211, 47, 47, 0.05) 0%, #FFFFFF 100%) !important;
   }
 
   .card.room-red .room-title {
-    color: #ff8a9e !important;
+    color: #D32F2F !important;
   }
 
   .card.room-green {
-    border-left: 4px solid #33aa66 !important;
-    background: linear-gradient(135deg, rgba(51, 170, 102, 0.1) 0%, #1a1a2e 100%) !important;
+    border-left: 4px solid #388E3C !important;
+    background: linear-gradient(135deg, rgba(56, 142, 60, 0.05) 0%, #FFFFFF 100%) !important;
   }
 
   .card.room-green .room-title {
-    color: #52b788 !important;
+    color: #388E3C !important;
   }
 
   .card.room-orange {
-    border-left: 4px solid #ffaa00 !important;
-    background: linear-gradient(135deg, rgba(255, 170, 0, 0.1) 0%, #1a1a2e 100%) !important;
+    border-left: 4px solid #F57C00 !important;
+    background: linear-gradient(135deg, rgba(245, 124, 0, 0.05) 0%, #FFFFFF 100%) !important;
   }
 
   .card.room-orange .room-title {
-    color: #ffcc44 !important;
+    color: #F57C00 !important;
   }
 </style>
 
