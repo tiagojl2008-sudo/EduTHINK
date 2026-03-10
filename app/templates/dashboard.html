@@ -379,6 +379,45 @@
     document.getElementById(id).style.display = 'block';
     btn.classList.add('active');
   }
+
+  // BLOQUEAR HORAS PASSADAS PARA HOJE
+  document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('input[name="date"]');
+    const startInput = document.querySelector('input[name="start_time"]');
+    const endInput = document.querySelector('input[name="end_time"]');
+    
+    if (dateInput && startInput) {
+      dateInput.addEventListener('change', function() {
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (this.value === today) {
+          // Se for hoje, definir hora mínima como hora atual
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const minTime = `${hours}:${minutes}`;
+          
+          startInput.min = minTime;
+          endInput.min = minTime;
+          
+          // Se hora atual for maior que a selecionada, atualizar
+          if (startInput.value && startInput.value < minTime) {
+            startInput.value = minTime;
+          }
+          if (endInput.value && endInput.value < minTime) {
+            endInput.value = minTime;
+          }
+        } else {
+          // Se for outro dia, permitir qualquer hora
+          startInput.min = '00:00';
+          endInput.min = '00:00';
+        }
+      });
+      
+      // Trigger change on load
+      dateInput.dispatchEvent(new Event('change'));
+    }
+  });
 </script>
 
 {% if error %}

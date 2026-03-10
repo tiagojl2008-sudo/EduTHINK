@@ -55,51 +55,65 @@ async def create_reservation(
 ):
     user = require_login(request, db)
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
-    
+
     if not room:
         raise HTTPException(status_code=404, detail="Sala não encontrada")
-    
+
     # Verificar dia da semana
     python_dow = datetime.strptime(date, "%Y-%m-%d").weekday()
     dow = (python_dow + 1) % 7
     work_days = [int(d) for d in room.work_days.split(",")]
-    
+
     errors = []
+
+    # Validação: A data não pode ser no passado
+    today = date_type.today()
+    reservation_date = datetime.strptime(date, "%Y-%m-%d").date()
     
+    if reservation_date < today:
+        errors.append("Não é possível reservar datas passadas.")
+    
+    # Validação: Se for hoje, hora deve ser >= hora atual
+    if reservation_date == today:
+        from datetime import datetime as dt
+        current_time = dt.now().strftime("%H:%M")
+        if start_time < current_time:
+            errors.append("Não é possível reservar horas passadas de hoje.")
+
     if dow not in work_days:
         errors.append("A sala está encerrada nesse dia da semana.")
-    
+
     if start_time >= end_time:
         errors.append("A hora de início deve ser anterior à hora de fim.")
-    
+
     if not time_in_range(start_time, end_time, room.start_time, room.end_time):
         errors.append(f"Fora do horário útil ({room.start_time} – {room.end_time}).")
-    
-    # Verificar conflitos com outras reservas
+
+    # Verificar conflitos com TODAS as reservas (incluindo as do próprio utilizador)
     existing = db.query(models.Reservation).filter(
         models.Reservation.room_id == room_id,
-        models.Reservation.date == date,
-        models.Reservation.user_id != user.id
+        models.Reservation.date == date
     ).all()
-    
+
     for r in existing:
+        # Ignorar a própria reserva se estiver a editar (não é o caso aqui)
         if times_overlap(start_time, end_time, r.start_time, r.end_time):
             errors.append(f"Conflito com reserva existente: {r.title} ({r.start_time}–{r.end_time})")
             break
-    
+
     if errors:
         rooms = db.query(models.Room).all()
-        today = str(date_type.today())
-        all_res = db.query(models.Reservation).filter(models.Reservation.date == today).all()
+        today_str = str(date_type.today())
+        all_res = db.query(models.Reservation).filter(models.Reservation.date == today_str).all()
         my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
-        
+
         return request.app.state.templates.TemplateResponse(
             "dashboard.html",
             {
                 "request": request,
                 "user": user,
                 "rooms": rooms,
-                "today": today,
+                "today": today_str,
                 "all_reservations": all_res,
                 "my_reservations": my_res,
                 "error": " | ".join(errors),
@@ -268,3 +282,4 @@ async def update_user(
             "success": "Perfil atualizado com sucesso!",
         },
     )
+
