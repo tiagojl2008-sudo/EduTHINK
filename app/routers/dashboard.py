@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, UploadFile, File
 from fastapi.responses import RedirectResponse
 from datetime import datetime, date as date_type
-import hashlib
+import bcrypt
 import os
+import uuid
 
 from .. import models
 from ..database import get_db
@@ -24,7 +25,7 @@ async def dashboard(request: Request, db=Depends(get_db)):
     my_res = db.query(models.Reservation).filter(
         models.Reservation.user_id == user.id
     ).order_by(models.Reservation.date, models.Reservation.start_time).all()
-    
+
     return request.app.state.templates.TemplateResponse(
         "dashboard.html",
         {
@@ -69,10 +70,10 @@ async def create_reservation(
     # Validação: A data não pode ser no passado
     today = date_type.today()
     reservation_date = datetime.strptime(date, "%Y-%m-%d").date()
-    
+
     if reservation_date < today:
         errors.append("Não é possível reservar datas passadas.")
-    
+
     # Validação: Se for hoje, hora deve ser >= hora atual
     if reservation_date == today:
         from datetime import datetime as dt
@@ -119,7 +120,7 @@ async def create_reservation(
                 "error": " | ".join(errors),
             },
         )
-    
+
     # Criar reserva
     reservation = models.Reservation(
         title=title,
@@ -131,7 +132,7 @@ async def create_reservation(
     )
     db.add(reservation)
     db.commit()
-    
+
     return RedirectResponse(url="/dashboard", status_code=303)
 
 
@@ -143,16 +144,16 @@ async def create_reservation(
 async def delete_reservation(request: Request, res_id: int, db=Depends(get_db)):
     user = require_login(request, db)
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
-    
+
     if not res:
         raise HTTPException(status_code=404, detail="Reserva não encontrada")
-    
+
     if res.user_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Não tens permissão")
-    
+
     db.delete(res)
     db.commit()
-    
+
     redirect = "/admin/reservations" if user.role == "admin" else "/dashboard"
     return RedirectResponse(url=redirect, status_code=303)
 
@@ -164,13 +165,13 @@ async def delete_reservation(request: Request, res_id: int, db=Depends(get_db)):
 @router.get("/user")
 async def user_page(request: Request, db=Depends(get_db)):
     user = require_login(request, db)
-    
+
     if user.role == "admin":
         raise HTTPException(status_code=403, detail="Admin não tem acesso a esta área.")
-    
+
     my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
     rooms = db.query(models.Room).all()
-    
+
     return request.app.state.templates.TemplateResponse(
         "user.html",
         {
@@ -187,6 +188,12 @@ async def user_page(request: Request, db=Depends(get_db)):
 # ATUALIZAR PERFIL
 # ===================================================================
 
+# Allowed MIME types for avatar uploads
+ALLOWED_MIME_TYPES = {
+    "image/jpeg", "image/png", "image/gif",
+}
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
+
 @router.post("/user/update")
 async def update_user(
     request: Request,
@@ -197,16 +204,15 @@ async def update_user(
     db=Depends(get_db),
 ):
     user = require_login(request, db)
-    
+
     if user.role == "admin":
         raise HTTPException(status_code=403, detail="Admin não tem acesso a esta área.")
-    
+
     # Processar avatar
     if avatar and avatar.filename:
-        allowed_ext = [".jpg", ".jpeg", ".png", ".gif"]
-        file_ext = avatar.filename[avatar.filename.rfind("."):]
-        
-        if file_ext.lower() not in allowed_ext:
+        file_ext = os.path.splitext(avatar.filename)[1].lower()
+
+        if file_ext not in ALLOWED_EXTENSIONS:
             my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
             rooms = db.query(models.Room).all()
             return request.app.state.templates.TemplateResponse(
@@ -219,7 +225,22 @@ async def update_user(
                     "error": "Formato não permitido. Usa JPG, PNG ou GIF.",
                 },
             )
-        
+
+        # Validate MIME type
+        if avatar.content_type not in ALLOWED_MIME_TYPES:
+            my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
+            rooms = db.query(models.Room).all()
+            return request.app.state.templates.TemplateResponse(
+                "user.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "my_reservations": my_res,
+                    "rooms": rooms,
+                    "error": "Tipo de ficheiro não permitido.",
+                },
+            )
+
         content = await avatar.read()
         if len(content) > 2 * 1024 * 1024:
             my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
@@ -234,16 +255,17 @@ async def update_user(
                     "error": "Ficheiro muito grande. Máximo 2MB.",
                 },
             )
-        
+
         os.makedirs("app/static/avatars", exist_ok=True)
-        new_filename = f"user_{user.id}{file_ext}"
+        # Use a secure filename: user_<id>_<uuid>.<ext>
+        new_filename = f"user_{user.id}_{uuid.uuid4().hex[:8]}{file_ext}"
         file_path = f"app/static/avatars/{new_filename}"
-        
+
         with open(file_path, "wb") as f:
             f.write(content)
-        
+
         user.avatar = f"/static/avatars/{new_filename}"
-    
+
     # Verificar email duplicado
     if email != user.email:
         existing = db.query(models.User).filter(models.User.email == email).first()
@@ -260,18 +282,18 @@ async def update_user(
                     "error": "Este email já está em uso.",
                 },
             )
-    
+
     # Atualizar dados
     user.name = name
     user.email = email
     if password:
-        user.password = hashlib.sha256(password.encode()).hexdigest()
-    
+        user.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
     db.commit()
-    
+
     my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
     rooms = db.query(models.Room).all()
-    
+
     return request.app.state.templates.TemplateResponse(
         "user.html",
         {
@@ -282,4 +304,3 @@ async def update_user(
             "success": "Perfil atualizado com sucesso!",
         },
     )
-

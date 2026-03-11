@@ -6,3 +6,5 @@ ldap3
 python-multipart
 pytest
 httpx
+bcrypt
+slowapi

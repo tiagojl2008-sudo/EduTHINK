@@ -61,6 +61,3 @@ class Equipment(Base):
     room = relationship("Room", back_populates="equipment")
 
 
-# Adiciona isto à classe Room (linha 29):
-# equipment = relationship("Equipment", back_populates="room")
-

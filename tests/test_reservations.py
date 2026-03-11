@@ -16,7 +16,7 @@ from datetime import datetime, date, time
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import hashlib
+import bcrypt
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -77,11 +77,11 @@ def client(db):
 @pytest.fixture
 def admin_user(db):
     """Cria um utilizador admin."""
-    import hashlib
+    hashed = bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode()
     user = models.User(
         name="Admin User",
         email="admin@salas.pt",
-        password=hashlib.sha256("admin123".encode()).hexdigest(),
+        password=hashed,
         role="admin"
     )
     db.add(user)
@@ -93,10 +93,11 @@ def admin_user(db):
 @pytest.fixture
 def normal_user(db):
     """Cria um utilizador normal."""
+    hashed = bcrypt.hashpw("password123".encode(), bcrypt.gensalt()).decode()
     user = models.User(
         name="Test User",
         email="user@test.pt",
-        password=hashlib.sha256("password123".encode()).hexdigest(),
+        password=hashed,
         role="user"
     )
     db.add(user)
@@ -199,7 +200,7 @@ class TestConflictValidation:
         # Tentar criar reserva conflituosa
         start = "10:00"
         end = "12:00"
-        
+
         # Verificar conflitos com TODAS as reservas (incluindo a própria)
         existing = db.query(models.Reservation).filter(
             models.Reservation.room_id == room.id,
@@ -313,20 +314,20 @@ class TestDateBlockValidation:
         """Reserva bloqueada num dia fora dos work_days (fim de semana)."""
         # Sala com work_days="1,2,3,4,5" (Seg-Sex)
         # 2026-03-14 é Sábado (dia 6)
-        
+
         dow = 6  # Sábado
         work_days = [int(d) for d in room.work_days.split(",")]
-        
+
         is_blocked = dow not in work_days
         assert is_blocked == True
 
     def test_reservation_on_workday_allowed(self, db, room, normal_user):
         """Reserva permitida num dia útil."""
         # 2026-03-10 é Terça-feira (dia 2)
-        
+
         dow = 2  # Terça
         work_days = [int(d) for d in room.work_days.split(",")]
-        
+
         is_allowed = dow in work_days
         assert is_allowed == True
 
@@ -401,7 +402,7 @@ class TestDurationRules:
         """Hora de início deve ser antes da hora de fim."""
         start_time = "09:00"
         end_time = "11:00"
-        
+
         is_valid = start_time < end_time
         assert is_valid == True
 
@@ -409,7 +410,7 @@ class TestDurationRules:
         """Hora de fim antes do início é inválido."""
         start_time = "11:00"
         end_time = "09:00"
-        
+
         is_valid = start_time < end_time
         assert is_valid == False
 
@@ -417,7 +418,7 @@ class TestDurationRules:
         """Duração deve estar dentro do horário útil."""
         start = "09:00"
         end = "17:00"
-        
+
         is_valid = time_in_range(start, end, room.start_time, room.end_time)
         assert is_valid == True
 
@@ -425,7 +426,7 @@ class TestDurationRules:
         """Duração que excede horário útil é inválida."""
         start = "07:00"
         end = "19:00"
-        
+
         is_valid = time_in_range(start, end, room.start_time, room.end_time)
         assert is_valid == False
 
@@ -473,7 +474,7 @@ class TestReservationCreation:
         # Verificar conflito antes de criar segunda
         start = "10:00"
         end = "12:00"
-        
+
         existing = db.query(models.Reservation).filter(
             models.Reservation.room_id == room.id,
             models.Reservation.date == "2026-03-10"
@@ -491,7 +492,7 @@ class TestReservationCreation:
         """Criar reserva fora do horário útil."""
         start = "07:00"
         end = "08:00"
-        
+
         is_valid = time_in_range(start, end, room.start_time, room.end_time)
         assert is_valid == False
 
@@ -499,7 +500,7 @@ class TestReservationCreation:
         """Criar reserva em data bloqueada (fim de semana)."""
         dow = 6  # Sábado
         work_days = [int(d) for d in room.work_days.split(",")]
-        
+
         is_blocked = dow not in work_days
         assert is_blocked == True
 
@@ -605,35 +606,35 @@ class TestLDAPAuthMock:
     def test_ldap_auth_success(self):
         """Login LDAP bem sucedido."""
         mock_auth = MockLDAPAuthenticator()
-        
+
         result = mock_auth.authenticate("fry", "fry")
         assert result == True
 
     def test_ldap_auth_wrong_password(self):
         """Login LDAP com password errada."""
         mock_auth = MockLDAPAuthenticator()
-        
+
         result = mock_auth.authenticate("fry", "wrong")
         assert result == False
 
     def test_ldap_auth_unknown_user(self):
         """Login LDAP com utilizador desconhecido."""
         mock_auth = MockLDAPAuthenticator()
-        
+
         result = mock_auth.authenticate("unknown", "password")
         assert result == False
 
     def test_ldap_auth_empty_credentials(self):
         """Login LDAP com credenciais vazias."""
         mock_auth = MockLDAPAuthenticator()
-        
+
         result = mock_auth.authenticate("", "")
         assert result == False
 
     def test_ldap_auth_creates_user_in_db(self, db):
         """Login LDAP bem sucedido cria utilizador na BD."""
         mock_auth = MockLDAPAuthenticator()
-        
+
         # Autenticar
         auth_result = mock_auth.authenticate("fry", "fry")
         assert auth_result == True

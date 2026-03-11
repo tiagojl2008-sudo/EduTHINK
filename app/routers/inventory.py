@@ -16,7 +16,7 @@ async def list_inventory(request: Request, db=Depends(get_db)):
     rooms = db.query(models.Room).all()
     
     return request.app.state.templates.TemplateResponse(
-        "admin_iventory.html",
+        "admin_inventory.html",
         {
             "request": request,
             "user": user,
