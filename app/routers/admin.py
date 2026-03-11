@@ -1,4 +1,4 @@
-1from fastapi import APIRouter, Request, Form, Depends, HTTPException
+from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from datetime import date as date_type
 
@@ -274,35 +274,39 @@ async def list_users(request:Request, db=Depends(get_db)):
     user=require_admin(request,db)
     users=db.query(models.User).all()
     return request.app.state.templates.TemplateResponse(
-        "admin_users.html"
+        "admin_users.html",
         {
             "request": request, "user": user, "users": users,
         },
     )
 @router.post("/users/update/{user_id}")
 async def update_user(
-    request: Request, user_id: int, name: str= Form(...), email: str=Form(...), role: str=Form(...) #admin ou user
-    db=Depends(get_db),
+    request: Request, 
+    user_id: int, 
+    name: str = Form(...), 
+    email: str = Form(...), 
+    role: str = Form(...),  # admin ou user
+    db: Session = Depends(get_db)
 ):
-    admin=require_admin(request,db)
-    target_user=db.query(models.User).filter(models.User.id==user_id).first()
+    admin = require_admin(request, db)
+    target_user = db.query(models.User).filter(models.User.id == user_id).first()
     if not target_user:
         raise HTTPException(status_code=404)
-    target_user=name
-    target_user=email
-    target_user=role
+    target_user.name = name
+    target_user.email = email
+    target_user.role = role
     db.commit()
-    return RedirectResponse(url="admin/users",status_code=303)
+    return RedirectResponse(url="/admin/users", status_code=303)
 
 @router.post("/users/delete/{user_id}")
-async def delete_user(request: Request, user_id:int,db=Depends(get_db)):
-    admin=require_admin(request,db)
-    target_user=db.query(models.User).filter(models.User.id==user_id).first()
+async def delete_user(request: Request, user_id: int, db: Session = Depends(get_db)):
+    admin = require_admin(request, db)
+    target_user = db.query(models.User).filter(models.User.id == user_id).first()
 
     if target_user:
         # Não permitir eliminar a si próprio
-        if target_user.id==admin.id:
-            raise HTTPException(statuts_code=400, detail=" Não podes eliminar-te a ti mesmo.")
+        if target_user.id == admin.id:
+            raise HTTPException(status_code=400, detail="Não podes eliminar-te a ti mesmo.")
         db.delete(target_user)
         db.commit()
-        return RedirectResponse(url="/admin/users",status_code=303)
+        return RedirectResponse(url="/admin/users", status_code=303)
