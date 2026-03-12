@@ -93,3 +93,8 @@ async def delete_equipment(request: Request, equipment_id: int, db=Depends(get_d
         db.commit()
     
     return RedirectResponse(url="/admin/inventory", status_code=303)
+
+@router.post("/assign-to-user/equipment_id}")
+async def assign_to_user(
+    request: Requets
+)
