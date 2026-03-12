@@ -18,13 +18,13 @@ app.state.templates = templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # include routers
-from .routers import auth, public, dashboard, admin, equipment # noqa: E402
+from .routers import auth, public, dashboard, admin, inventory # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(public.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
-app.include_router(equipment.router)
+app.include_router(inventory.router)
 
 # cria admin default se não existir
 @app.on_event("startup")
@@ -32,11 +32,18 @@ async def create_default_admin():
     from .database import SessionLocal
     db = SessionLocal()
     try:
-        admin = db.query(models.User).filter(models.User.role == "admin").first()
+        # Verificar se já existe admin pelo EMAIL (não por role)
+        admin = db.query(models.User).filter(models.User.email == "admin@salas.pt").first()
         if not admin:
             hashed = hashlib.sha256("admin123".encode()).hexdigest()
             db.add(models.User(name="Admin", email="admin@salas.pt", password=hashed, role="admin"))
             db.commit()
+            print("✅ Admin padrão criado: admin@salas.pt / admin123")
+        else:
+            print("ℹ️ Admin já existe na base de dados")
+    except Exception as e:
+        print(f"⚠️ Erro ao criar admin: {e}")
+        db.rollback()
     finally:
         db.close()
 

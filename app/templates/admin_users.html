@@ -21,7 +21,8 @@
     <a class="admin-tab" href="/admin">Visão Geral</a>
     <a class="admin-tab" href="/admin/reservations">Reservas</a>
     <a class="admin-tab" href="/admin/rooms">Salas</a>
-    <a class="admin-tab active" href="/admin/users">Utilizadores</a>
+    <a class="admin-tab" href="/admin/users">Utilizadores</a>
+    <a class="admin-tab" href="/admin/inventory">Inventário</a>
   </div>
 
   {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
@@ -60,35 +61,40 @@
               </div>
             </td>
           </tr>
-#Campo de role ou seja, cargo
-<div class="form-group">
-<label class="lbl">Função</label>
-<select name="role">
-  <option value="user">Utilizador</option>
-  <option value="admin">Adminstador</option>
-</select>
-</div>
+
           <!-- MODAL EDITAR USER -->
           <div class="modal-backdrop" id="modal-edit-user-{{ u.id }}">
             <div class="modal">
               <div class="modal-title">
-                Editar Utilizador
+                <span>✏️ Editar {{ u.name }}</span>
                 <button class="modal-close" onclick="closeModal('modal-edit-user-{{ u.id }}')">✕</button>
               </div>
               <form method="post" action="/admin/users/update/{{ u.id }}">
-                <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" value="{{ u.name }}" required></div>
-                <div class="form-group"><label class="lbl">Email</label><input type="email" name="email" value="{{ u.email }}" required></div>
-                <div class="form-group"><label class="lbl">Nova Palavra-passe (deixar vazio para manter)</label><input type="password" name="password" placeholder="••••••••"></div>
                 <div class="form-group">
-                  <label class="lbl">Função</label>
-                  <select name="role">
-                    <option value="user" {{ 'selected' if u.role == 'user' }}>Utilizador</option>
-                    <option value="admin" {{ 'selected' if u.role == 'admin' }}>Administrador</option>
-                  </select>
+                  <label class="lbl">👤 Nome</label>
+                  <input type="text" name="name" value="{{ u.name }}" required>
                 </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+                <div class="form-group">
+                  <label class="lbl">📧 Email</label>
+                  <input type="email" name="email" value="{{ u.email }}" required>
+                </div>
+                <div class="form-group">
+                  <label class="lbl">🔑 Nova Palavra-passe (deixar vazio para manter)</label>
+                  <input type="password" name="password" placeholder="••••••••" minlength="6">
+                </div>
+                <div class="form-group" style="background: var(--primary-light); padding: 16px; border-radius: 8px; border: 1px solid var(--primary);">
+                  <label class="lbl" style="color: var(--primary); font-weight: 700;">🎯 Função / Cargo</label>
+                  <select name="role" style="border-color: var(--primary);">
+                    <option value="user" {{ 'selected' if u.role == 'user' }}>👤 Utilizador (acesso básico)</option>
+                    <option value="admin" {{ 'selected' if u.role == 'admin' }}>👑 Administrador (acesso total)</option>
+                  </select>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                    ℹ️ Administradores podem gerir salas, reservas e utilizadores.
+                  </p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                   <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-user-{{ u.id }}')">Cancelar</button>
-                  <button type="submit" class="btn btn-primary">Guardar</button>
+                  <button type="submit" class="btn btn-primary">💾 Guardar Alterações</button>
                 </div>
               </form>
             </div>
@@ -103,23 +109,35 @@
 <div class="modal-backdrop" id="modal-create-user">
   <div class="modal">
     <div class="modal-title">
-      Novo Utilizador
+      <span>➕ Novo Utilizador</span>
       <button class="modal-close" onclick="closeModal('modal-create-user')">✕</button>
     </div>
     <form method="post" action="/admin/users/create">
-      <div class="form-group"><label class="lbl">Nome</label><input type="text" name="name" placeholder="Nome completo" required></div>
-      <div class="form-group"><label class="lbl">Email</label><input type="email" name="email" placeholder="email@exemplo.pt" required></div>
-      <div class="form-group"><label class="lbl">Palavra-passe</label><input type="password" name="password" placeholder="••••••••" required></div>
       <div class="form-group">
-        <label class="lbl">Função</label>
-        <select name="role">
-          <option value="user">Utilizador</option>
-          <option value="admin">Administrador</option>
-        </select>
+        <label class="lbl">👤 Nome</label>
+        <input type="text" name="name" placeholder="Nome completo" required>
       </div>
-      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+      <div class="form-group">
+        <label class="lbl">📧 Email</label>
+        <input type="email" name="email" placeholder="email@exemplo.pt" required>
+      </div>
+      <div class="form-group">
+        <label class="lbl">🔑 Palavra-passe</label>
+        <input type="password" name="password" placeholder="••••••••" minlength="6" required>
+      </div>
+      <div class="form-group" style="background: var(--primary-light); padding: 16px; border-radius: 8px; border: 1px solid var(--primary);">
+        <label class="lbl" style="color: var(--primary); font-weight: 700;">🎯 Função / Cargo</label>
+        <select name="role" style="border-color: var(--primary);">
+          <option value="user">👤 Utilizador (acesso básico)</option>
+          <option value="admin">👑 Administrador (acesso total)</option>
+        </select>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+          ℹ️ Administradores podem gerir salas, reservas e utilizadores.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-user')">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Criar</button>
+        <button type="submit" class="btn btn-primary">✨ Criar Utilizador</button>
       </div>
     </form>
   </div>
