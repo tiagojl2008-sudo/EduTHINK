@@ -55,31 +55,20 @@ class Equipment(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(String, default="")
-    quantity = Column(Integer, default=1)
 
     room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
     room = relationship("Room", back_populates="equipment")
 
 
 class UserEquipment(Base):
-    """Equipamentos atribuídos a utilizadores (sem quantidade, associação direta)"""
+    """Equipamentos atribuídos a utilizadores"""
     __tablename__ = "user_equipment"
 
     id = Column(Integer, primary_key=True, index=True)
-    
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False)
-    
-    assigned_date = Column(String, nullable=False)  # ex: "2026-03-11"
-    notes = Column(String, default="")  # Observações
-    
+    assigned_date = Column(String, nullable=False)
+    notes = Column(String, default="")
+
     user = relationship("User", backref="assigned_equipment")
     equipment = relationship("Equipment")
-class UserEquipment(Base):
-    _tablename_="user_equipment"
-    id=Column(Integer, primary_key=True)
-    user_id=Column(Integer,ForeignKey("users.id"))
-    Equipment_id=Column(Integer,ForeignKey("equipment.id"))
-    user=relationship("User",backref="assigned_equipment")
-    equipment=relationship("Equipment")
-

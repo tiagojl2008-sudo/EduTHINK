@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %} Equipamentos por Utilizador {% endblock %}
+{% block content %}
+<div class="container">
+    <h1 class="page-title"> Equipamentos por Utilizador</h1>
+</div> class="admin-tabs"
+<a class="admin-tabs" href="/admin/Iventory">Iventário</a>
+<a class="admin-tab active" href="/admin/Iventory/by-user"></a> Por utilizador
+</div>
+<!--Lista de utilizadores com seus equipamentos-->
+{% for u in users %}
+<div class="card" style="margin-bottom:24px;">
+<h3 style="margin-bottom: 16px;"👤 {{ u.name }} </h3>
+{% set user_assignments= assignments | selectattr("user_id", "equalto", u.id)| list}
+&}
+{% if user_assignments %}
+<table>
+    <thead>
+        <tr>
+            <th> Equipamentos</th>
+            <th> Data</th>
+            <th> Notas</th>
+            <th> Ações</th>
+        </tr>
+    </thead>
+<tbody>
+    {% for a in user_assignments %}
+    <tr>
+        <td>{{a.equipment.name}}</td>
+        <td>{{a.assigned_date}}</td>
+        <td>{{a.notes or '-'}}</td>
+        <td>
+            <form action="/admin/iventory/remove_assignments/{{a.id}}" method="post"></form>
+            <button type="submit" class="btn btn-danger btn-sm"></button> Remover</button> 
+        </form>
+        </td>
+    </tr>
+    {% end for %}
+    <tbody>
+        <table>
+            {% else %}
+            <p style="color: var(--text-muted);"> Sem equipamentos atríbuidos</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endblock %}
+    </tbody>
+</tbody>
+</div>
+
+

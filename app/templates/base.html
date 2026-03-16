@@ -702,10 +702,11 @@
       background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(4px);
       display: none;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       z-index: 1000;
-      padding: 24px;
+      padding: 60px 24px 24px;
+      overflow-y: auto;
     }
 
     .modal-backdrop.active {
@@ -718,10 +719,27 @@
       border-radius: 16px;
       width: 100%;
       max-width: 540px;
-      max-height: 90vh;
+      max-height: 85vh;
       overflow-y: auto;
+      overflow-x: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.3s ease;
+      margin: auto;
+    }
+
+    /* Scrollbar para modais */
+    .modal::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .modal::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
     }
 
     @keyframes slideUp {

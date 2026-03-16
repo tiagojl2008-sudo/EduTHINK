@@ -18,14 +18,13 @@ app.state.templates = templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # include routers
-from .routers import auth, public, dashboard, admin, inventory, user_equipment # noqa: E402
+from .routers import auth, public, dashboard, admin, inventory # noqa: E402
 
 app.include_router(auth.router)
 app.include_router(public.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(inventory.router)
-app.include_router(user_equipment.router)
 
 # cria admin default se não existir
 @app.on_event("startup")

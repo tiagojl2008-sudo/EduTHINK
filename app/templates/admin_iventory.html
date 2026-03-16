@@ -5,7 +5,10 @@
     <h1 class="page-title">Inventário de Equipamentos</h1>
     <p class="page-sub">Gerir equipamentos e materiais das salas.</p>
 
-    <button class="btn btn-primary" onclick="openModal('modal-create')" style="margin-bottom: 24px;">➕ Novo Equipamento</button>
+    <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+        <button class="btn btn-primary" onclick="openModal('modal-create')">➕ Novo Equipamento</button>
+        <a href="/admin/inventory/by-user" class="btn btn-secondary">👥 Ver por Utilizador</a>
+    </div>
 
     <div class="card" style="padding: 0; overflow: hidden;">
         <table>
@@ -13,7 +16,6 @@
                 <tr>
                     <th>Nome</th>
                     <th>Descrição</th>
-                    <th>Quantidade</th>
                     <th>Sala</th>
                     <th>Ações</th>
                 </tr>
@@ -23,14 +25,10 @@
                 <tr>
                     <td><strong>{{ item.name }}</strong></td>
                     <td style="color: var(--text-muted);">{{ item.description or '—' }}</td>
-                    <td>
-                        <span class="tag {{ 'tag-green' if item.quantity > 5 else 'tag-orange' if item.quantity > 0 else 'tag-gray' }}">
-                            {{ item.quantity }}
-                        </span>
-                    </td>
                     <td>{{ item.room.name if item.room else '—' }}</td>
                     <td>
                         <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-secondary btn-sm" onclick="openModal('modal-assign-{{ item.id }}')">Atribuir</button>
                             <button class="btn btn-secondary btn-sm" onclick="openModal('modal-edit-{{ item.id }}')">Editar</button>
                             <form method="post" action="/admin/inventory/delete/{{ item.id }}" style="display:inline;" onsubmit="return confirm('Eliminar este equipamento?')">
                                 <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">🗑️</button>
@@ -38,39 +36,6 @@
                         </div>
                     </td>
                 </tr>
-
-                <!-- Modal Editar -->
-                <div class="modal-backdrop" id="modal-edit-{{ item.id }}">
-                    <div class="modal">
-                        <div class="modal-title">
-                            <span>✏️ Editar {{ item.name }}</span>
-                            <button class="modal-close" onclick="closeModal('modal-edit-{{ item.id }}')">✕</button>
-                        </div>
-                        <form method="post" action="/admin/inventory/update/{{ item.id }}">
-                            <div class="form-group">
-                                <label class="lbl">📦 Nome do Equipamento</label>
-                                <input type="text" name="name" value="{{ item.name }}" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="lbl">📝 Descrição</label>
-                                <textarea name="description" rows="3">{{ item.description or '' }}</textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="lbl">🏢 Sala</label>
-                                <select name="room_id" required>
-                                    {% for room in rooms %}
-                                    <option value="{{ room.id }}" {{ 'selected' if item.room_id == room.id }}>{{ room.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-{{ item.id }}')">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">💾 Guardar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
                 {% endfor %}
             </tbody>
         </table>
@@ -83,6 +48,69 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Modais de Editar e Atribuir (fora da tabela) -->
+{% for item in equipment %}
+<!-- Modal Editar -->
+<div class="modal-backdrop" id="modal-edit-{{ item.id }}">
+    <div class="modal">
+        <div class="modal-title">
+            <span>✏️ Editar {{ item.name }}</span>
+            <button class="modal-close" onclick="closeModal('modal-edit-{{ item.id }}')">✕</button>
+        </div>
+        <form method="post" action="/admin/inventory/update/{{ item.id }}">
+            <div class="form-group">
+                <label class="lbl">📦 Nome do Equipamento</label>
+                <input type="text" name="name" value="{{ item.name }}" required>
+            </div>
+            <div class="form-group">
+                <label class="lbl">📝 Descrição</label>
+                <textarea name="description" rows="3">{{ item.description or '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="lbl">🏢 Sala</label>
+                <select name="room_id" required>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}" {{ 'selected' if item.room_id == room.id }}>{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-{{ item.id }}')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">💾 Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Atribuir a Utilizador -->
+<div class="modal-backdrop" id="modal-assign-{{ item.id }}">
+    <div class="modal">
+        <div class="modal-title">
+            <span>🔗 Atribuir {{ item.name }}</span>
+            <button class="modal-close" onclick="closeModal('modal-assign-{{ item.id }}')">✕</button>
+        </div>
+        <form method="post" action="/admin/inventory/assign-to-user/{{ item.id }}">
+            <div class="form-group">
+                <label class="lbl">👤 Utilizador</label>
+                <select name="user_id" required>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.name }} ({{ u.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="lbl">📝 Notas</label>
+                <textarea name="notes" rows="3" placeholder="Ex: Computador principal, Teclado sobresselente..."></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-assign-{{ item.id }}')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">🔗 Atribuir</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
 
 <!-- Modal Criar Equipamento -->
 <div class="modal-backdrop" id="modal-create">
@@ -99,10 +127,6 @@
             <div class="form-group">
                 <label class="lbl">📝 Descrição</label>
                 <textarea name="description" rows="3" placeholder="Descrição do equipamento..."></textarea>
-            </div>
-            <div class="form-group">
-                <label class="lbl">🔢 Quantidade</label>
-                <input type="number" name="quantity" placeholder="0" min="0" required>
             </div>
             <div class="form-group">
                 <label class="lbl">🏢 Sala</label>
@@ -151,7 +175,3 @@
     });
 </script>
 {% endblock %}
-<div style="display: flex; gap:10px; margin-bottom: 24px;">
-    <button class="btn btn-primary" onclick="openModal('modal-create')">➕  Novo Equipamento </button>
-    <a href="/admin/iventory/by-user" class="btn btn-secondary">👥 Ver por utilizador</a>
-</div>

@@ -25,7 +25,6 @@
           <tr>
             <th>Nome</th>
             <th>Descrição</th>
-            <th>Quantidade</th>
             <th>Sala</th>
             <th>Ações</th>
           </tr>
@@ -35,7 +34,6 @@
             <tr>
               <td style="font-weight: 600;">{{ eq.name }}</td>
               <td style="color: #666;">{{ eq.description }}</td>
-              <td>{{ eq.quantity }}</td>
               <td>{{ eq.room.name if eq.room else '—' }}</td>
               <td>
                 <form method="post" action="/admin/equipment/delete/{{ eq.id }}" style="display:inline;" onsubmit="return confirm('Eliminar equipamento?')">
@@ -69,10 +67,6 @@
       <div class="form-group">
         <label class="lbl">Descrição</label>
         <textarea name="description" placeholder="Ex: Projetor HD HDMI"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="lbl">Quantidade</label>
-        <input type="number" name="quantity" value="1" min="1" required>
       </div>
       <div class="form-group">
         <label class="lbl">Sala</label>
