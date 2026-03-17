@@ -1,13 +1,10 @@
-import hashlib
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 import os
 
 from . import models
-from .database import get_db
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod"))
@@ -26,16 +23,18 @@ app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(inventory.router)
 
-# cria admin default se não existir
+# criar tabelas e admin default
 @app.on_event("startup")
 async def create_default_admin():
-    from .database import SessionLocal
+    from .database import SessionLocal, engine, Base
+    Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         # Verificar se já existe admin pelo EMAIL (não por role)
         admin = db.query(models.User).filter(models.User.email == "admin@salas.pt").first()
         if not admin:
-            hashed = hashlib.sha256("admin123".encode()).hexdigest()
+            from .utils import hash_password
+            hashed = hash_password("admin123")
             db.add(models.User(name="Admin", email="admin@salas.pt", password=hashed, role="admin"))
             db.commit()
             print("✅ Admin padrão criado: admin@salas.pt / admin123")
@@ -69,20 +68,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         {"request": request, "user": user, "detail": str(exc.detail)},
         status_code=exc.status_code
     )
-
-
-# Endpoint de debug para testar autenticação
-@app.get("/debug/auth")
-async def debug_auth(request: Request, db=Depends(get_db)):
-    from .utils import get_current_user, require_admin
-    user = get_current_user(request, db)
-    is_admin = user.role == "admin" if user else False
-    return {
-        "logged_in": user is not None,
-        "is_admin": is_admin,
-        "user_id": request.cookies.get("user_id"),
-        "user": {"name": user.name, "email": user.email, "role": user.role} if user else None,
-    }
 
 
 if __name__ == "__main__":

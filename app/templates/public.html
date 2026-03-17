@@ -49,9 +49,9 @@
           <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 6px;">
             {% if room_res %}
               {% for r in room_res | sort(attribute='start_time') %}
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #0d0d1a; border-radius: 8px; border-left: 3px solid {{ room.color }};">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f8f9fa; border-radius: 8px; border-left: 3px solid {{ room.color }};">
                   <span style="font-weight: 600; font-size: 14px;">{{ r.title }}</span>
-                  <span style="font-family: monospace; font-size: 13px; color: #888;">{{ r.start_time }} – {{ r.end_time }}</span>
+                  <span style="font-family: monospace; font-size: 13px; color: var(--text-muted);">{{ r.start_time }} – {{ r.end_time }}</span>
                 </div>
               {% endfor %}
             {% else %}

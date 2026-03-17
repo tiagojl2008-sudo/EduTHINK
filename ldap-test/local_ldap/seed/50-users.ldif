@@ -5,3 +5,49 @@ cn: Test User
 sn: User
 uid: testuser
 userPassword: test123
+mail: testuser@planetexpress.com
+
+dn: uid=maria.silva,ou=people,dc=planetexpress,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Maria Silva
+sn: Silva
+uid: maria.silva
+userPassword: maria123
+mail: maria.silva@planetexpress.com
+
+dn: uid=joao.santos,ou=people,dc=planetexpress,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Joao Santos
+sn: Santos
+uid: joao.santos
+userPassword: joao123
+mail: joao.santos@planetexpress.com
+
+dn: uid=ana.costa,ou=people,dc=planetexpress,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Ana Costa
+sn: Costa
+uid: ana.costa
+userPassword: ana123
+mail: ana.costa@planetexpress.com
+
+dn: uid=pedro.oliveira,ou=people,dc=planetexpress,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Pedro Oliveira
+sn: Oliveira
+uid: pedro.oliveira
+userPassword: pedro123
+mail: pedro.oliveira@planetexpress.com
+
+dn: uid=sofia.ferreira,ou=people,dc=planetexpress,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: Sofia Ferreira
+sn: Ferreira
+uid: sofia.ferreira
+userPassword: sofia123
+mail: sofia.ferreira@planetexpress.com
