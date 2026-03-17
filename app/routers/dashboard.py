@@ -54,25 +54,88 @@ async def create_reservation(
     db=Depends(get_db),
 ):
     user = require_login(request, db)
+    # == Validação de Campos ==
+    errors=[]
+    # 1. Validar room_id
+    if not room_id or room_id <=0:
+        errors.append("Sala Inválida")
+    # 2. Validar date
+    if not date:
+        errors.append("Data é obrigatória")
+    # 3. Validar start_time
+    if not start_time:
+        errors.append("Hora de ínicio é obrigatória")
+    # 4. Validar end_time
+    if not end_time:
+        errors.append("Hora de fim é obrigatória")
+    # 5. Validar title
+    if not title or len(title.strip())==0:
+        errors.append("Título é obrigatório")
+    elif len(title)>100:
+        errors.append("Título muito longo(máx. 100 caracteres).")
+    # 6. Validar start_time < end_time
+    if start_time and end_time and start_time >= end_time:
+        errors.append("Hora de início deve ser anterior à hora de fim.")
+    
+    # Se houver erros básicos, retorna logo
+    if errors:
+        rooms = db.query(models.Room).all()
+        today_str = str(date_type.today())
+        all_res = db.query(models.Reservation).filter(
+            models.Reservation.date == today_str
+        ).all()
+        my_res = db.query(models.Reservation).filter(
+            models.Reservation.user_id == user.id
+        ).all()
+        
+        return request.app.state.templates.TemplateResponse(
+            "dashboard.html",
+            {
+                "request": request,
+                "user": user,
+                "rooms": rooms,
+                "today": today_str,
+                "all_reservations": all_res,
+                "my_reservations": my_res,
+                "error": " | ".join(errors),
+            },
+        )
+    
+    # Validações avançadas
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
-
+    
     if not room:
-        raise HTTPException(status_code=404, detail="Sala não encontrada")
-
+        errors.append("Sala não encontrada.")
+        rooms = db.query(models.Room).all()
+        today_str = str(date_type.today())
+        all_res = db.query(models.Reservation).filter(models.Reservation.date == today_str).all()
+        my_res = db.query(models.Reservation).filter(models.Reservation.user_id == user.id).all()
+        
+        return request.app.state.templates.TemplateResponse(
+            "dashboard.html",
+            {
+                "request": request,
+                "user": user,
+                "rooms": rooms,
+                "today": today_str,
+                "all_reservations": all_res,
+                "my_reservations": my_res,
+                "error": " | ".join(errors),
+            },
+        )
+    
     # Verificar dia da semana
     python_dow = datetime.strptime(date, "%Y-%m-%d").weekday()
     dow = (python_dow + 1) % 7
     work_days = [int(d) for d in room.work_days.split(",")]
 
-    errors = []
-
     # Validação: A data não pode ser no passado
     today = date_type.today()
     reservation_date = datetime.strptime(date, "%Y-%m-%d").date()
-    
+
     if reservation_date < today:
         errors.append("Não é possível reservar datas passadas.")
-    
+
     # Validação: Se for hoje, hora deve ser >= hora atual
     if reservation_date == today:
         from datetime import datetime as dt
@@ -83,20 +146,16 @@ async def create_reservation(
     if dow not in work_days:
         errors.append("A sala está encerrada nesse dia da semana.")
 
-    if start_time >= end_time:
-        errors.append("A hora de início deve ser anterior à hora de fim.")
-
     if not time_in_range(start_time, end_time, room.start_time, room.end_time):
         errors.append(f"Fora do horário útil ({room.start_time} – {room.end_time}).")
 
-    # Verificar conflitos com TODAS as reservas (incluindo as do próprio utilizador)
+    # Verificar conflitos com TODAS as reservas
     existing = db.query(models.Reservation).filter(
         models.Reservation.room_id == room_id,
         models.Reservation.date == date
     ).all()
 
     for r in existing:
-        # Ignorar a própria reserva se estiver a editar (não é o caso aqui)
         if times_overlap(start_time, end_time, r.start_time, r.end_time):
             errors.append(f"Conflito com reserva existente: {r.title} ({r.start_time}–{r.end_time})")
             break
@@ -119,10 +178,10 @@ async def create_reservation(
                 "error": " | ".join(errors),
             },
         )
-    
+
     # Criar reserva
     reservation = models.Reservation(
-        title=title,
+        title=title.strip(),
         date=date,
         start_time=start_time,
         end_time=end_time,
@@ -131,7 +190,7 @@ async def create_reservation(
     )
     db.add(reservation)
     db.commit()
-    
+
     return RedirectResponse(url="/dashboard", status_code=303)
 
 

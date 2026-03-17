@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
     <h1 class="page-title">Equipamentos por Utilizador</h1>
-    <p class="page-sub">Ver equipamentos atribuídos a cada utilizador.</p>
+    <p class="page-sub">Gerir equipamentos atribuídos aos utilizadores.</p>
 
     <div class="admin-tabs">
         <a class="admin-tab" href="/admin/inventory">Inventário</a>
@@ -13,50 +13,44 @@
     <!-- Lista de utilizadores com seus equipamentos -->
     {% for u in users %}
     <div class="card" style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="margin: 0;">👤 {{ u.name }}</h3>
-            <span class="tag {{ 'tag-orange' if u.role == 'admin' else 'tag-gray' }}">{{ u.role }}</span>
-        </div>
-
+        <h3 style="margin-bottom: 16px;">👤 {{ u.name }}</h3>
         {% set user_assignments = assignments | selectattr("user_id", "equalto", u.id) | list %}
-
+        
         {% if user_assignments %}
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Equipamento</th>
-                            <th>Data Atribuição</th>
-                            <th>Notas</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for a in user_assignments %}
-                        <tr>
-                            <td><strong>{{ a.equipment.name }}</strong></td>
-                            <td>{{ a.assigned_date }}</td>
-                            <td style="color: var(--text-muted);">{{ a.notes or '—' }}</td>
-                            <td>
-                                <form action="/admin/inventory/remove-assignment/{{ a.id }}" method="post" style="display:inline;" onsubmit="return confirm('Remover este equipamento?')">
-                                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Remover</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Equipamento</th>
+                    <th>Data Atribuição</th>
+                    <th>Notas</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in user_assignments %}
+                <tr>
+                    <td><strong>{{ a.equipment.name }}</strong></td>
+                    <td>{{ a.assigned_date }}</td>
+                    <td>{{ a.notes or '—' }}</td>
+                    <td>
+                        <form action="/admin/inventory/return-equipment/{{ a.id }}" method="post" style="display:inline;" onsubmit="return confirm('Devolver este equipamento?')">
+                            <button type="submit" class="btn btn-danger btn-sm">🔄 Devolver</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-            <p style="color: var(--text-muted); padding: 12px 0;">📭 Sem equipamentos atribuídos.</p>
+        <p style="color: var(--text-muted); padding: 12px 0;">Sem equipamentos atribuídos</p>
         {% endif %}
     </div>
     {% endfor %}
 
     {% if not users %}
-    <div class="card card-empty" style="text-align: center; padding: 48px !important; color: var(--text-muted);">
-        <div style="font-size: 48px; margin-bottom: 12px;">👥</div>
-        <p>Não há utilizadores registados.</p>
+    <div class="card card-empty" style="text-align: center; padding: 48px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+        <p style="color: var(--text-muted);">Ainda não há utilizadores registados.</p>
     </div>
     {% endif %}
 </div>

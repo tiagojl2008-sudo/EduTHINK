@@ -30,6 +30,21 @@
           </tr>
         </thead>
         <tbody>
+          {% for eq in equipments %}
+          <div class="card">
+            <p>{{eq.name}}</p>
+            {% if eq.user_id%}
+            <p>Em uso por: {{eq.user.username}}</p>
+            <!--Botão de devolver-->
+            <form method="post" action="/equipment/return/{{eq.id}}">
+              <button type="sunmit" class="btn bnt-danger"></button>
+            </form>
+            {% else %}
+            <p>Livre</p>
+            {% endif %}
+            </div>
+            
+          </div>
           {% for eq in equipment_list %}
             <tr>
               <td style="font-weight: 600;">{{ eq.name }}</td>

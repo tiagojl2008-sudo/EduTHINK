@@ -159,11 +159,11 @@ async def remove_assignment(request: Request, assignment_id: int, db=Depends(get
 @router.get("/by-user")
 async def equipment_by_user(request: Request, db=Depends(get_db)):
     user = require_admin(request, db)
-    
+
     assignments = db.query(models.UserEquipment).all()
     users = db.query(models.User).all()
     equipment_list = db.query(models.Equipment).all()
-    
+
     return request.app.state.templates.TemplateResponse(
         "admin_equipment_by_user.html",
         {
@@ -174,3 +174,19 @@ async def equipment_by_user(request: Request, db=Depends(get_db)):
             "equipment": equipment_list,
         },
     )
+
+
+# Devolver equipamento (remove atribuição)
+@router.post("/return-equipment/{assignment_id}")
+async def return_equipment(request: Request, assignment_id: int, db=Depends(get_db)):
+    user = require_admin(request, db)
+
+    assignment = db.query(models.UserEquipment).filter(
+        models.UserEquipment.id == assignment_id
+    ).first()
+
+    if assignment:
+        db.delete(assignment)
+        db.commit()
+
+    return RedirectResponse(url="/admin/inventory/by-user", status_code=303)

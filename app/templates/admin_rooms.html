@@ -38,14 +38,15 @@
         <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #888;">
           <div>📍 {{ room.location }}</div>
           <div>👥 Capacidade: {{ room.capacity }}</div>
-          <div>🕐 {{ room.start_time }} – {{ room.end_time }}</div>
+          <div style="color: #D32F2F; font-weight: 600;">🕐 {{ room.start_time }} – {{ room.end_time }}</div>
           <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
             {% set day_names = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'] %}
             {% set work_list = room.work_days.split(',') %}
             {% for i in range(7) %}
-              {% set bg_color = '#0a2a10' if (i|string) in work_list else '#1a1a1a' %}
-              {% set text_color = '#52b788' if (i|string) in work_list else '#444' %}
-              <span style="padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: {{ bg_color }}; color: {{ text_color }};">
+              {% set is_active = (i|string) in work_list %}
+              {% set bg_color = '#D32F2F' if is_active else '#2a2a2a' %}
+              {% set text_color = '#FFFFFF' if is_active else '#555555' %}
+              <span style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; background: {{ bg_color }}; color: {{ text_color }};">
                 {{ day_names[i] }}
               </span>
             {% endfor %}
@@ -125,8 +126,9 @@
         <label class="lbl">Dias Úteis</label>
         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
           {% for day, label in [(0,'Dom'),(1,'Seg'),(2,'Ter'),(3,'Qua'),(4,'Qui'),(5,'Sex'),(6,'Sáb')] %}
-            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 8px; border: 1px solid #2a2a3e; background: #111120; font-size: 12px; font-weight: 700; color: #666;">
-              <input type="checkbox" name="work_days" value="{{ day }}" {{ 'checked' if day in [1,2,3,4,5] }} style="margin-right: 4px;">
+            {% set is_default = day in [1,2,3,4,5] %}
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 6px 12px; border-radius: 8px; border: 1px solid {{ '#D32F2F' if is_default else '#2a2a3e' }}; background: {{ '#D32F2F' if is_default else '#111120' }}; font-size: 12px; font-weight: 700; color: {{ '#FFFFFF' if is_default else '#666' }};">
+              <input type="checkbox" name="work_days" value="{{ day }}" {{ 'checked' if is_default }} style="margin-right: 4px;">
               {{ label }}
             </label>
           {% endfor %}
@@ -147,18 +149,18 @@
       // Atualizar estado inicial
       const lbl = cb.closest('label');
       if (lbl && cb.checked) {
-        lbl.style.borderColor = '#52b788';
-        lbl.style.background = '#0a2a10';
-        lbl.style.color = '#52b788';
+        lbl.style.borderColor = '#D32F2F';
+        lbl.style.background = '#D32F2F';
+        lbl.style.color = '#FFFFFF';
       }
-      
+
       cb.addEventListener('change', function() {
         const label = this.closest('label');
         if (!label) return;
         if (this.checked) {
-          label.style.borderColor = '#52b788';
-          label.style.background = '#0a2a10';
-          label.style.color = '#52b788';
+          label.style.borderColor = '#D32F2F';
+          label.style.background = '#D32F2F';
+          label.style.color = '#FFFFFF';
         } else {
           label.style.borderColor = '#2a2a3e';
           label.style.background = '#111120';

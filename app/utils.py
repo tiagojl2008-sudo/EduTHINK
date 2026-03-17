@@ -33,12 +33,18 @@ def require_login(request: Request, db: Session = Depends(get_db)):
 
 
 def require_admin(request: Request, db: Session = Depends(get_db)):
+    """Verifica se user é admin OU manager."""
     user = require_login(request, db)
-    if user.role != "admin":
-        logger.warning(f"User {user.name} não é admin (role={user.role})")
+    if user.role not in ["admin", "manager"]:
+        logger.warning(f"User {user.name} não é admin/manager (role={user.role})")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    logger.info(f"Admin {user.name} autenticado")
+    logger.info(f"Admin/Manager {user.name} autenticado (role={user.role})")
     return user
+
+
+def is_admin_or_manager(user) -> bool:
+    """Verifica se o user tem role admin ou manager."""
+    return user.role in ["admin", "manager"]
 
 
 def times_overlap(s1: str, e1: str, s2: str, e2: str) -> bool:

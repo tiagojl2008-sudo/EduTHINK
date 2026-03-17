@@ -35,34 +35,46 @@ async def login_page(request: Request):
 @router.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...), db=Depends(get_db)):
     logger.info(f"Tentativa de login: {username}")
-    
-    # Tentar autenticação local primeiro (para admin e users na BD)
-    user = db.query(models.User).filter(models.User.email == username).first()
+
+    # Procurar utilizador por email OU username
+    user = db.query(models.User).filter(
+        (models.User.email == username) | (models.User.name == username)
+    ).first()
 
     if user and user.password:
         logger.info(f"User encontrado na BD: {user.email}")
-        
+
         # Hash SHA256 da password inserida
         hashed = hashlib.sha256(password.encode()).hexdigest()
-        
+
         # Comparar com o hash guardado na BD
         if hashed == user.password:
             logger.info(f"Login sucesso: {username}")
             resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
             resp.set_cookie("user_id", str(user.id), httponly=True, samesite="lax", max_age=60*60*24*7)
             return resp
-        
+
         logger.warning(f"Password incorreta para: {username}")
 
     # Tentar autenticação LDAP
     logger.info(f"Tentando LDAP para: {username}")
     if authenticator.authenticate(username=username, password=password):
         if not user:
-            user = models.User(name=username, email=username, password="", role="user")
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            logger.info(f"User LDAP criado: {username}")
+            # Procurar se já existe user com este email LDAP
+            ldap_email = f"{username}@planetexpress.com"
+            user = db.query(models.User).filter(
+                (models.User.email == ldap_email) | (models.User.name == username)
+            ).first()
+            
+            if not user:
+                # Criar novo user
+                user = models.User(name=username, email=ldap_email, password="", role="user")
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+                logger.info(f"User LDAP criado: {username}")
+            else:
+                logger.info(f"User LDAP existente: {user.name} (role: {user.role})")
 
         resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
         resp.set_cookie("user_id", str(user.id), httponly=True, samesite="lax", max_age=60*60*24*7)
