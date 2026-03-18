@@ -125,6 +125,14 @@ async def assign_to_user(
         if not target_user:
             raise HTTPException(status_code=404, detail="Utilizador não encontrado")
         
+        # Verificar se equipamento já está atribuído a este utilizador
+        existing_assignment = db.query(models.UserEquipment).filter(
+            models.UserEquipment.user_id == user_id,
+            models.UserEquipment.equipment_id == equipment_id,
+        ).first()
+        if existing_assignment:
+            raise HTTPException(status_code=400, detail="Este equipamento já está atribuído a este utilizador.")
+
         # Criar atribuição
         from datetime import datetime
         assignment = models.UserEquipment(

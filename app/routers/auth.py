@@ -1,13 +1,18 @@
 import logging
 import os
-import hashlib
 
 from fastapi import APIRouter, Request, Form, Depends, status
 from fastapi.responses import RedirectResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from .. import models
 from ..database import get_db
-from ..utils import get_current_user
+from ..utils import get_current_user, verify_password
+
+limiter = Limiter(key_func=get_remote_address)
+
+_cookie_secure = os.getenv("COOKIE_SECURE", "false").lower() in ("1", "true", "yes")
 from ..services.ldap_auth import LDAPAuthenticator
 
 logging.basicConfig(
@@ -33,6 +38,7 @@ async def login_page(request: Request):
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 def login(request: Request, username: str = Form(...), password: str = Form(...), db=Depends(get_db)):
     logger.info(f"Tentativa de login: {username}")
 
@@ -44,14 +50,11 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
     if user and user.password:
         logger.info(f"User encontrado na BD: {user.email}")
 
-        # Hash SHA256 da password inserida
-        hashed = hashlib.sha256(password.encode()).hexdigest()
-
-        # Comparar com o hash guardado na BD
-        if hashed == user.password:
+        # Verificar password com bcrypt
+        if verify_password(password, user.password):
             logger.info(f"Login sucesso: {username}")
             resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-            resp.set_cookie("user_id", str(user.id), httponly=True, samesite="lax", max_age=60*60*24*7)
+            resp.set_cookie("user_id", str(user.id), httponly=True, samesite="strict", secure=_cookie_secure, max_age=60*60*2)
             return resp
 
         logger.warning(f"Password incorreta para: {username}")
@@ -61,7 +64,8 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
     if authenticator.authenticate(username=username, password=password):
         if not user:
             # Procurar se já existe user com este email LDAP
-            ldap_email = f"{username}@planetexpress.com"
+            ldap_email_domain = os.getenv("LDAP_EMAIL_DOMAIN", "planetexpress.com")
+            ldap_email = f"{username}@{ldap_email_domain}"
             user = db.query(models.User).filter(
                 (models.User.email == ldap_email) | (models.User.name == username)
             ).first()
@@ -77,7 +81,7 @@ def login(request: Request, username: str = Form(...), password: str = Form(...)
                 logger.info(f"User LDAP existente: {user.name} (role: {user.role})")
 
         resp = RedirectResponse(url="/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-        resp.set_cookie("user_id", str(user.id), httponly=True, samesite="lax", max_age=60*60*24*7)
+        resp.set_cookie("user_id", str(user.id), httponly=True, samesite="strict", secure=_cookie_secure, max_age=60*60*2)
         return resp
 
     # Erro de autenticação

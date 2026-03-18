@@ -1,12 +1,12 @@
 """
 Script para corrigir o Admin
-- Atualiza password para SHA256
+- Atualiza password para bcrypt
 - Atualiza role para 'admin'
 """
 
-import hashlib
 from app.database import SessionLocal
 from app.models import User
+from app.utils import hash_password
 
 print("=" * 50)
 print("🔧 CORRIGIR ADMIN")
@@ -25,7 +25,7 @@ try:
         
         # Atualizar password para SHA256
         print("\n🔐 A atualizar password...")
-        admin.password = hashlib.sha256("admin123".encode()).hexdigest()
+        admin.password = hash_password("admin123")
         
         # Atualizar role para admin
         print("🔑 A atualizar role para admin...")
@@ -42,11 +42,10 @@ try:
         print("\n❌ Admin não encontrado!")
         print("   A criar admin novo...")
         
-        hashed = hashlib.sha256("admin123".encode()).hexdigest()
         admin = User(
             name="Admin",
             email="admin@salas.pt",
-            password=hashed,
+            password=hash_password("admin123"),
             role="admin"
         )
         db.add(admin)

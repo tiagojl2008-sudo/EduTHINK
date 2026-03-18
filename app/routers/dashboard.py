@@ -1,18 +1,21 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, UploadFile, File
 from fastapi.responses import RedirectResponse
 from datetime import datetime, date as date_type
+from sqlalchemy.orm import joinedload
 import os
 
 from .. import models
 from ..database import get_db
-from ..utils import require_login, times_overlap, time_in_range, hash_password
+from ..utils import require_login, times_overlap, time_in_range, hash_password, is_admin_or_manager
 
 router = APIRouter()
 
 
 def _user_page_response(request, user, db, error=None, success=None):
     """Build the user.html TemplateResponse with standard context."""
-    my_res = db.query(models.Reservation).filter(
+    my_res = db.query(models.Reservation).options(
+        joinedload(models.Reservation.room),
+    ).filter(
         models.Reservation.user_id == user.id
     ).all()
     rooms = db.query(models.Room).all()
@@ -38,8 +41,13 @@ async def dashboard(request: Request, db=Depends(get_db)):
     user = require_login(request, db)
     rooms = db.query(models.Room).all()
     today = str(date_type.today())
-    all_res = db.query(models.Reservation).filter(models.Reservation.date == today).all()
-    my_res = db.query(models.Reservation).filter(
+    all_res = db.query(models.Reservation).options(
+        joinedload(models.Reservation.room),
+        joinedload(models.Reservation.user),
+    ).filter(models.Reservation.date == today).all()
+    my_res = db.query(models.Reservation).options(
+        joinedload(models.Reservation.room),
+    ).filter(
         models.Reservation.user_id == user.id
     ).order_by(models.Reservation.date, models.Reservation.start_time).all()
     
@@ -224,13 +232,13 @@ async def delete_reservation(request: Request, res_id: int, db=Depends(get_db)):
     if not res:
         raise HTTPException(status_code=404, detail="Reserva não encontrada")
     
-    if res.user_id != user.id and user.role != "admin":
+    if res.user_id != user.id and not is_admin_or_manager(user):
         raise HTTPException(status_code=403, detail="Não tens permissão")
-    
+
     db.delete(res)
     db.commit()
-    
-    redirect = "/admin/reservations" if user.role == "admin" else "/dashboard"
+
+    redirect = "/admin/reservations" if is_admin_or_manager(user) else "/dashboard"
     return RedirectResponse(url=redirect, status_code=303)
 
 
@@ -241,10 +249,6 @@ async def delete_reservation(request: Request, res_id: int, db=Depends(get_db)):
 @router.get("/user")
 async def user_page(request: Request, db=Depends(get_db)):
     user = require_login(request, db)
-    
-    if user.role == "admin":
-        raise HTTPException(status_code=403, detail="Admin não tem acesso a esta área.")
-    
     return _user_page_response(request, user, db)
 
 
@@ -262,10 +266,7 @@ async def update_user(
     db=Depends(get_db),
 ):
     user = require_login(request, db)
-    
-    if user.role == "admin":
-        raise HTTPException(status_code=403, detail="Admin não tem acesso a esta área.")
-    
+
     # Processar avatar
     if avatar and avatar.filename:
         allowed_ext = [".jpg", ".jpeg", ".png", ".gif"]
@@ -277,6 +278,21 @@ async def update_user(
         content = await avatar.read()
         if len(content) > 2 * 1024 * 1024:
             return _user_page_response(request, user, db, error="Ficheiro muito grande. Máximo 2MB.")
+
+        # Validate file content matches expected image format
+        magic_signatures = {
+            b'\xff\xd8\xff': [".jpg", ".jpeg"],
+            b'\x89PNG': [".png"],
+            b'GIF87a': [".gif"],
+            b'GIF89a': [".gif"],
+        }
+        content_valid = False
+        for sig, exts in magic_signatures.items():
+            if content[:len(sig)] == sig and file_ext.lower() in exts:
+                content_valid = True
+                break
+        if not content_valid:
+            return _user_page_response(request, user, db, error="O conteúdo do ficheiro não corresponde ao formato indicado.")
         
         os.makedirs("app/static/avatars", exist_ok=True)
         new_filename = f"user_{user.id}{file_ext}"

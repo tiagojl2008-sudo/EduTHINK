@@ -1,11 +1,13 @@
+import re
+
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import date as date_type
 
 from .. import models
 from ..database import get_db
-from ..utils import require_admin
+from ..utils import require_admin, times_overlap, time_in_range
 
 router = APIRouter(prefix="/admin")
 
@@ -21,7 +23,10 @@ async def home(request: Request, db=Depends(get_db)):
     rooms_list = db.query(models.Room).all()
     rooms = {r.id: r for r in rooms_list}
     today = str(date_type.today())
-    today_res = db.query(models.Reservation).filter(models.Reservation.date == today).all()
+    today_res = db.query(models.Reservation).options(
+        joinedload(models.Reservation.room),
+        joinedload(models.Reservation.user),
+    ).filter(models.Reservation.date == today).all()
     total_res = db.query(models.Reservation).count()
 
     return request.app.state.templates.TemplateResponse(
@@ -66,11 +71,19 @@ async def create_room(
 ):
     require_admin(request, db)
 
+    errors = []
     if not work_days:
+        errors.append("Selecione pelo menos um dia útil.")
+    if start_time and end_time and start_time >= end_time:
+        errors.append("Hora de início deve ser anterior à hora de fim.")
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+        errors.append("Cor inválida. Use o formato hexadecimal (ex: #e85d04).")
+
+    if errors:
         rooms = db.query(models.Room).all()
         return request.app.state.templates.TemplateResponse(
             "admin_rooms.html",
-            {"request": request, "user": require_admin(request, db), "rooms": rooms, "error": "Selecione pelo menos um dia útil."},
+            {"request": request, "user": require_admin(request, db), "rooms": rooms, "error": " | ".join(errors)},
         )
 
     room = models.Room(
@@ -102,11 +115,19 @@ async def update_room(
 ):
     require_admin(request, db)
 
+    errors = []
     if not work_days:
+        errors.append("Selecione pelo menos um dia útil.")
+    if start_time and end_time and start_time >= end_time:
+        errors.append("Hora de início deve ser anterior à hora de fim.")
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+        errors.append("Cor inválida. Use o formato hexadecimal (ex: #e85d04).")
+
+    if errors:
         rooms = db.query(models.Room).all()
         return request.app.state.templates.TemplateResponse(
             "admin_rooms.html",
-            {"request": request, "user": require_admin(request, db), "rooms": rooms, "error": "Selecione pelo menos um dia útil."},
+            {"request": request, "user": require_admin(request, db), "rooms": rooms, "error": " | ".join(errors)},
         )
 
     room = db.query(models.Room).filter(models.Room.id == room_id).first()
@@ -232,7 +253,10 @@ async def delete_user(request: Request, user_id: int, db: Session = Depends(get_
 @router.get("/reservations")
 async def reservations(request: Request, db=Depends(get_db)):
     user = require_admin(request, db)
-    reservations = db.query(models.Reservation).order_by(models.Reservation.date.desc(), models.Reservation.start_time).all()
+    reservations = db.query(models.Reservation).options(
+        joinedload(models.Reservation.room),
+        joinedload(models.Reservation.user),
+    ).order_by(models.Reservation.date.desc(), models.Reservation.start_time).all()
     rooms_list = db.query(models.Room).all()
     rooms = {r.id: r for r in rooms_list}
 
@@ -253,12 +277,48 @@ async def update_reservation(
     end_time: str = Form(...),
     db=Depends(get_db),
 ):
-    require_admin(request, db)
+    user = require_admin(request, db)
     res = db.query(models.Reservation).filter(models.Reservation.id == res_id).first()
     if not res:
         raise HTTPException(status_code=404)
 
-    res.title = title
+    errors = []
+
+    if not title or len(title.strip()) == 0:
+        errors.append("Título é obrigatório.")
+    elif len(title) > 100:
+        errors.append("Título muito longo (máx. 100 caracteres).")
+
+    if start_time and end_time and start_time >= end_time:
+        errors.append("Hora de início deve ser anterior à hora de fim.")
+
+    room = db.query(models.Room).filter(models.Room.id == room_id).first()
+    if not room:
+        errors.append("Sala não encontrada.")
+    elif start_time and end_time and start_time < end_time:
+        if not time_in_range(start_time, end_time, room.start_time, room.end_time):
+            errors.append(f"Fora do horário útil ({room.start_time} – {room.end_time}).")
+
+        existing = db.query(models.Reservation).filter(
+            models.Reservation.room_id == room_id,
+            models.Reservation.date == date,
+            models.Reservation.id != res_id,
+        ).all()
+        for r in existing:
+            if times_overlap(start_time, end_time, r.start_time, r.end_time):
+                errors.append(f"Conflito com reserva existente: {r.title} ({r.start_time}–{r.end_time})")
+                break
+
+    if errors:
+        reservations = db.query(models.Reservation).order_by(models.Reservation.date.desc(), models.Reservation.start_time).all()
+        rooms_list = db.query(models.Room).all()
+        rooms_map = {r.id: r for r in rooms_list}
+        return request.app.state.templates.TemplateResponse(
+            "admin_reservations.html",
+            {"request": request, "user": user, "reservations": reservations, "rooms": rooms_map, "error": " | ".join(errors)},
+        )
+
+    res.title = title.strip()
     res.room_id = room_id
     res.date = date
     res.start_time = start_time

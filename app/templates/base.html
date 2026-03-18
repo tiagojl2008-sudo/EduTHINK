@@ -968,6 +968,29 @@
         }
       });
     });
+
+    // CSRF: inject token from cookie into all POST forms via fetch
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : '';
+    }
+    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const token = getCookie('csrftoken');
+        if (!token) return; // no token, let it through
+        e.preventDefault();
+        const formData = new FormData(form);
+        fetch(form.action || window.location.href, {
+          method: 'POST',
+          headers: { 'x-csrftoken': token },
+          body: formData,
+          redirect: 'follow'
+        }).then(resp => {
+          if (resp.redirected) { window.location.href = resp.url; }
+          else { resp.text().then(html => { document.open(); document.write(html); document.close(); }); }
+        });
+      });
+    });
   </script>
 </body>
 </html>                                                             

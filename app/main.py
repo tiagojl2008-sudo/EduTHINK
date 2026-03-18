@@ -1,13 +1,62 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+import logging
+import json
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from starlette_csrf import CSRFMiddleware
 import os
 
 from . import models
 
+
+# --- Structured JSON logging ---
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_obj = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info and record.exc_info[0]:
+            log_obj["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_obj, ensure_ascii=False)
+
+
+_log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+_use_json = os.getenv("LOG_FORMAT", "text").lower() == "json"
+
+_handler = logging.StreamHandler()
+if _use_json:
+    _handler.setFormatter(JSONFormatter())
+else:
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s - %(message)s"))
+
+logging.basicConfig(level=_log_level, handlers=[_handler], force=True)
+
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod"))
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+_secret_key = os.getenv("SECRET_KEY")
+if not _secret_key:
+    raise RuntimeError("SECRET_KEY environment variable is not set. Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\"")
+
+app.add_middleware(SessionMiddleware, secret_key=_secret_key)
+app.add_middleware(
+    CSRFMiddleware,
+    secret=_secret_key,
+    cookie_secure=os.getenv("COOKIE_SECURE", "false").lower() in ("1", "true", "yes"),
+    cookie_samesite="strict",
+)
 templates = Jinja2Templates(directory="app/templates")
 app.state.templates = templates
 
