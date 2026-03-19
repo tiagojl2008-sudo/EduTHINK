@@ -125,9 +125,13 @@ async def create_reservation(
         )
     
     # Verificar dia da semana
+    # Python: 0=Segunda, 1=Terça, ..., 5=Sábado, 6=Domingo
+    # Sistema: 0=Domingo, 1=Segunda, ..., 6=Sábado
     python_dow = datetime.strptime(date, "%Y-%m-%d").weekday()
-    dow = (python_dow + 1) % 7
+    dow = (python_dow + 1) % 7  # Converte para formato do sistema
     work_days = [int(d) for d in room.work_days.split(",")]
+
+    print(f"DEBUG: Data={date}, Python dow={python_dow}, Sistema dow={dow}, Work days={work_days}")
 
     # Validação: A data não pode ser no passado
     today = date_type.today()
@@ -179,7 +183,7 @@ async def create_reservation(
             },
         )
 
-    # Criar reserva
+   #  Criar reserva
     reservation = models.Reservation(
         title=title.strip(),
         date=date,
@@ -341,4 +345,4 @@ async def update_user(
             "success": "Perfil atualizado com sucesso!",
         },
     )
-
+#
