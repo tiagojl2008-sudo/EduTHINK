@@ -1,7 +1,9 @@
+import logging
+
+import bcrypt
 from fastapi import Request, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
-import logging
 
 from . import models
 from .database import get_db
@@ -54,6 +56,19 @@ def times_overlap(s1: str, e1: str, s2: str, e2: str) -> bool:
     t3 = datetime.strptime(s2, "%H:%M").time()
     t4 = datetime.strptime(e2, "%H:%M").time()
     return t1 < t4 and t2 > t3
+
+
+def hash_password(plain: str) -> str:
+    """Hash a password with bcrypt."""
+    return bcrypt.hashpw(plain.encode(), bcrypt.gensalt()).decode()
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    """Verify a password against a bcrypt hash."""
+    try:
+        return bcrypt.checkpw(plain.encode(), hashed.encode())
+    except Exception:
+        return False
 
 
 def time_in_range(start: str, end: str, room_start: str, room_end: str) -> bool:

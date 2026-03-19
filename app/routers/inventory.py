@@ -1,9 +1,13 @@
+import logging
+
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 
 from .. import models
 from ..database import get_db
 from ..utils import require_admin
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/inventory")
 
@@ -17,7 +21,7 @@ async def list_inventory(request: Request, db=Depends(get_db)):
     users = db.query(models.User).all()
 
     return request.app.state.templates.TemplateResponse(
-        "admin_iventory.html",
+        "admin_inventory.html",
         {
             "request": request,
             "user": user,
@@ -121,6 +125,14 @@ async def assign_to_user(
         if not target_user:
             raise HTTPException(status_code=404, detail="Utilizador não encontrado")
         
+        # Verificar se equipamento já está atribuído a este utilizador
+        existing_assignment = db.query(models.UserEquipment).filter(
+            models.UserEquipment.user_id == user_id,
+            models.UserEquipment.equipment_id == equipment_id,
+        ).first()
+        if existing_assignment:
+            raise HTTPException(status_code=400, detail="Este equipamento já está atribuído a este utilizador.")
+
         # Criar atribuição
         from datetime import datetime
         assignment = models.UserEquipment(
@@ -135,7 +147,7 @@ async def assign_to_user(
         return RedirectResponse(url="/admin/inventory", status_code=303)
 
     except Exception as e:
-        print(f"ERRO ao atribuir: {e}")
+        logger.error(f"ERRO ao atribuir: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -8,3 +8,5 @@ pytest
 httpx
 bcrypt
 slowapi
+python-dotenv
+starlette-csrf
